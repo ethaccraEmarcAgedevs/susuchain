@@ -1,0 +1,302 @@
+// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.20;
+
+import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
+import "@openzeppelin/contracts/access/Ownable.sol";
+
+contract SusuGroup is ReentrancyGuard, Ownable {
+    struct Member {
+        address memberAddress;
+        string ensName;
+        string efpProfile;
+        bool isActive;
+        uint256 contributionCount;
+        uint256 lastContribution;
+        bool hasReceivedPayout;
+    }
+
+    struct ContributionRound {
+        uint256 roundNumber;
+        address beneficiary;
+        uint256 totalAmount;
+        uint256 timestamp;
+        bool completed;
+        mapping(address => bool) hasContributed;
+    }
+
+    // Group information
+    string public groupName;
+    string public groupENSName;
+    uint256 public contributionAmount;
+    uint256 public contributionInterval; // in seconds
+    uint256 public maxMembers;
+    uint256 public currentRound;
+    bool public groupActive;
+
+    // Member management
+    address[] public memberAddresses;
+    mapping(address => Member) public members;
+    mapping(address => bool) public isMember;
+
+    // Round management
+    mapping(uint256 => ContributionRound) public rounds;
+    uint256 public nextRoundStartTime;
+    uint256 public groupStartTime;
+
+    // Queue for payout order
+    address[] public payoutQueue;
+    uint256 public nextBeneficiaryIndex;
+
+    // Events
+    event MemberJoined(address indexed member, string ensName, string efpProfile);
+    event ContributionMade(address indexed member, uint256 round, uint256 amount);
+    event PayoutDistributed(address indexed beneficiary, uint256 round, uint256 amount);
+    event NewRoundStarted(uint256 round, address beneficiary);
+    event GroupCompleted();
+
+    modifier onlyMember() {
+        require(isMember[msg.sender], "Not a member of this group");
+        _;
+    }
+
+    modifier groupIsActive() {
+        require(groupActive, "Group is not active");
+        _;
+    }
+
+    constructor(
+        string memory _groupName,
+        string memory _groupENSName,
+        uint256 _contributionAmount,
+        uint256 _contributionInterval,
+        uint256 _maxMembers,
+        address _creator
+    ) Ownable(_creator) {
+        require(_maxMembers > 1, "Group must have at least 2 members");
+        require(_contributionAmount > 0, "Contribution amount must be greater than 0");
+        require(_contributionInterval > 0, "Contribution interval must be greater than 0");
+
+        groupName = _groupName;
+        groupENSName = _groupENSName;
+        contributionAmount = _contributionAmount;
+        contributionInterval = _contributionInterval;
+        maxMembers = _maxMembers;
+        currentRound = 0;
+        groupActive = true;
+        nextBeneficiaryIndex = 0;
+
+        // Creator automatically joins as first member
+        _addMember(_creator, "", "");
+    }
+
+    function joinGroup(string memory _ensName, string memory _efpProfile) external {
+        require(memberAddresses.length < maxMembers, "Group is full");
+        require(!isMember[msg.sender], "Already a member");
+        require(groupActive, "Group is not active");
+
+        _addMember(msg.sender, _ensName, _efpProfile);
+
+        // Start the group if we have reached max members
+        if (memberAddresses.length == maxMembers && groupStartTime == 0) {
+            _startGroup();
+        }
+
+        emit MemberJoined(msg.sender, _ensName, _efpProfile);
+    }
+
+    function _addMember(address _member, string memory _ensName, string memory _efpProfile) internal {
+        members[_member] = Member({
+            memberAddress: _member,
+            ensName: _ensName,
+            efpProfile: _efpProfile,
+            isActive: true,
+            contributionCount: 0,
+            lastContribution: 0,
+            hasReceivedPayout: false
+        });
+
+        memberAddresses.push(_member);
+        isMember[_member] = true;
+        payoutQueue.push(_member);
+    }
+
+    function _startGroup() internal {
+        groupStartTime = block.timestamp;
+        nextRoundStartTime = block.timestamp;
+        _startNewRound();
+    }
+
+    function _startNewRound() internal {
+        require(nextBeneficiaryIndex < payoutQueue.length, "All members have received payouts");
+
+        currentRound++;
+        address beneficiary = payoutQueue[nextBeneficiaryIndex];
+
+        // Initialize the new round
+        ContributionRound storage round = rounds[currentRound];
+        round.roundNumber = currentRound;
+        round.beneficiary = beneficiary;
+        round.totalAmount = 0;
+        round.timestamp = block.timestamp;
+        round.completed = false;
+
+        nextRoundStartTime = block.timestamp + contributionInterval;
+
+        emit NewRoundStarted(currentRound, beneficiary);
+    }
+
+    function contributeToRound() external payable onlyMember groupIsActive nonReentrant {
+        require(currentRound > 0, "Group has not started yet");
+        require(msg.value == contributionAmount, "Incorrect contribution amount");
+        require(!rounds[currentRound].hasContributed[msg.sender], "Already contributed to this round");
+        require(!rounds[currentRound].completed, "Round already completed");
+
+        ContributionRound storage round = rounds[currentRound];
+        round.hasContributed[msg.sender] = true;
+        round.totalAmount += msg.value;
+
+        members[msg.sender].contributionCount++;
+        members[msg.sender].lastContribution = block.timestamp;
+
+        emit ContributionMade(msg.sender, currentRound, msg.value);
+
+        // Check if all members have contributed
+        if (_allMembersContributed(currentRound)) {
+            _completePayout();
+        }
+    }
+
+    function _allMembersContributed(uint256 roundNumber) internal view returns (bool) {
+        ContributionRound storage round = rounds[roundNumber];
+        for (uint256 i = 0; i < memberAddresses.length; i++) {
+            if (!round.hasContributed[memberAddresses[i]]) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    function _completePayout() internal {
+        ContributionRound storage round = rounds[currentRound];
+        round.completed = true;
+
+        address beneficiary = round.beneficiary;
+        uint256 payoutAmount = round.totalAmount;
+
+        members[beneficiary].hasReceivedPayout = true;
+        nextBeneficiaryIndex++;
+
+        // Transfer payout to beneficiary
+        (bool success, ) = payable(beneficiary).call{ value: payoutAmount }("");
+        require(success, "Transfer failed");
+
+        emit PayoutDistributed(beneficiary, currentRound, payoutAmount);
+
+        // Start next round or complete group
+        if (nextBeneficiaryIndex >= payoutQueue.length) {
+            groupActive = false;
+            emit GroupCompleted();
+        } else {
+            _startNewRound();
+        }
+    }
+
+    function forceNextRound() external onlyOwner {
+        require(block.timestamp >= nextRoundStartTime, "Round interval not reached");
+        require(!rounds[currentRound].completed, "Current round already completed");
+
+        _completePayout();
+    }
+
+    function getMemberCount() external view returns (uint256) {
+        return memberAddresses.length;
+    }
+
+    function getGroupInfo()
+        external
+        view
+        returns (
+            string memory name,
+            string memory ensName,
+            uint256 contribution,
+            uint256 interval,
+            uint256 maxMems,
+            uint256 currentMems,
+            uint256 round,
+            bool active,
+            address currentBeneficiary
+        )
+    {
+        address beneficiary = currentRound > 0 ? rounds[currentRound].beneficiary : address(0);
+
+        return (
+            groupName,
+            groupENSName,
+            contributionAmount,
+            contributionInterval,
+            maxMembers,
+            memberAddresses.length,
+            currentRound,
+            groupActive,
+            beneficiary
+        );
+    }
+
+    function getMemberInfo(
+        address _member
+    )
+        external
+        view
+        returns (
+            string memory ensName,
+            string memory efpProfile,
+            bool isActive,
+            uint256 contributionCount,
+            uint256 lastContribution,
+            bool hasReceivedPayout
+        )
+    {
+        require(isMember[_member], "Not a member");
+        Member memory member = members[_member];
+
+        return (
+            member.ensName,
+            member.efpProfile,
+            member.isActive,
+            member.contributionCount,
+            member.lastContribution,
+            member.hasReceivedPayout
+        );
+    }
+
+    function getRoundInfo(
+        uint256 roundNumber
+    ) external view returns (address beneficiary, uint256 totalAmount, uint256 timestamp, bool completed) {
+        require(roundNumber > 0 && roundNumber <= currentRound, "Invalid round number");
+        ContributionRound storage round = rounds[roundNumber];
+
+        return (round.beneficiary, round.totalAmount, round.timestamp, round.completed);
+    }
+
+    function hasContributedToRound(address _member, uint256 roundNumber) external view returns (bool) {
+        require(roundNumber > 0 && roundNumber <= currentRound, "Invalid round number");
+        return rounds[roundNumber].hasContributed[_member];
+    }
+
+    function getAllMembers() external view returns (address[] memory) {
+        return memberAddresses;
+    }
+
+    function getPayoutQueue() external view returns (address[] memory) {
+        return payoutQueue;
+    }
+
+    function emergencyWithdraw() external onlyOwner {
+        require(!groupActive, "Group is still active");
+        uint256 balance = address(this).balance;
+        if (balance > 0) {
+            (bool success, ) = payable(owner()).call{ value: balance }("");
+            require(success, "Emergency withdraw failed");
+        }
+    }
+}

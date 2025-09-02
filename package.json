@@ -57,5 +57,8 @@
   },
   "engines": {
     "node": ">=20.18.3"
+  },
+  "dependencies": {
+    "@ensdomains/ensjs": "^4.0.2"
   }
 }
