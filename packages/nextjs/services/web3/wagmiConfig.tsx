@@ -5,6 +5,7 @@ import { hardhat, mainnet } from "viem/chains";
 import { createConfig } from "wagmi";
 import scaffoldConfig, { DEFAULT_ALCHEMY_API_KEY, ScaffoldConfig } from "~~/scaffold.config";
 import { getAlchemyHttpUrl } from "~~/utils/scaffold-eth";
+import { burnerWalletConnector } from "./burnerWallet";
 
 const { targetNetworks } = scaffoldConfig;
 
@@ -20,9 +21,22 @@ const wagmiAdapter = new WagmiAdapter({
   ssr: true,
 });
 
-// Create Wagmi config using the adapter's wagmi config
-export const wagmiConfig = wagmiAdapter.wagmiConfig as any || createConfig({
+// Add burner wallet connector in development mode
+const isDevelopment = process.env.NODE_ENV === "development";
+
+// Get all connectors
+const getAllConnectors = () => {
+  const baseConnectors = wagmiAdapter.wagmiConfig?.connectors || [];
+  if (isDevelopment) {
+    return [...baseConnectors, burnerWalletConnector()];
+  }
+  return baseConnectors;
+};
+
+// Create Wagmi config with burner wallet support
+export const wagmiConfig = createConfig({
   chains: enabledChains,
+  connectors: getAllConnectors() as any,
   ssr: true,
   client({ chain }) {
     let rpcFallbacks = [http()];

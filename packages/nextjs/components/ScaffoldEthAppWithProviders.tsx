@@ -4,6 +4,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AppProgressBar as ProgressBar } from "next-nprogress-bar";
 import { Toaster } from "react-hot-toast";
 import { WagmiProvider } from "wagmi";
+import { BurnerWalletInfo } from "~~/components/BurnerWalletInfo";
 import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
 import { useInitializeNativeCurrencyPrice } from "~~/hooks/scaffold-eth";
@@ -20,6 +21,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
         <Footer />
       </div>
       <Toaster />
+      <BurnerWalletInfo />
     </>
   );
 };
