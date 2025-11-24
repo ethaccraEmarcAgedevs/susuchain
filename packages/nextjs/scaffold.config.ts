@@ -32,10 +32,23 @@ const scaffoldConfig = {
     // [chains.mainnet.id]: "https://mainnet.buidlguidl.com",
   },
 
-  // This is ours WalletConnect's default project ID.
-  // You can get your own at https://cloud.walletconnect.com
-  // It's recommended to store it in an env variable:
-  // .env.local for local testing, and in the Vercel/system env config for live apps.
+  // ==================================================================================
+  // WALLETCONNECT CLOUD PROJECT ID
+  // ==================================================================================
+  // IMPORTANT: Get your own WalletConnect Cloud Project ID for production!
+  // The default ID below is for development only and has limitations:
+  //   - Shared rate limits (may be throttled)
+  //   - No analytics or error tracking
+  //   - No custom branding
+  //   - Can be disabled at any time
+  //
+  // Create your FREE project at: https://cloud.reown.com
+  // Then set NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID in:
+  //   - .env.local (for local development)
+  //   - Vercel dashboard (for production)
+  //
+  // See .env.example for detailed setup instructions.
+  // ==================================================================================
   walletConnectProjectId: process.env.NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID || "3a8170812b534d0ff9d794f19a901d64",
 
   // Only show the Burner Wallet when running on hardhat network
