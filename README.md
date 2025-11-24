@@ -106,13 +106,55 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 
 ### Environment Setup
 
+#### 1. Frontend Environment Variables
+
 Create `.env.local` in `packages/nextjs/`:
+
 ```env
-NEXT_PUBLIC_ALCHEMY_API_KEY=your_alchemy_key
-NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_project_id
+NEXT_PUBLIC_ALCHEMY_API_KEY=your_alchemy_key_here
+NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID=your_walletconnect_project_id_here
 ```
 
+**Get Alchemy API Key:**
+1. Go to [https://dashboard.alchemyapi.io](https://dashboard.alchemyapi.io)
+2. Sign up / Log in
+3. Create a new app
+4. Copy your API key
+
+**Get WalletConnect Cloud Project ID (REQUIRED FOR PRODUCTION):**
+
+> ⚠️ **Important**: The default Project ID is for development only. You MUST create your own for production!
+
+1. Go to [https://cloud.reown.com](https://cloud.reown.com)
+2. Sign up / Log in with GitHub or email
+3. Click **"Create New Project"**
+4. Fill in project details:
+   - **Name**: SusuChain
+   - **Description**: Traditional West African savings groups on blockchain
+   - **URL**: Your production URL
+   - **Category**: DeFi
+5. Configure project settings:
+   - Upload your logo (512x512 PNG)
+   - Set **Allowed Origins**:
+     - `https://your-production-domain.com`
+     - `https://*.vercel.app` (for Vercel preview deployments)
+     - `http://localhost:3000` (for local development)
+   - Set **Allowed Redirect URIs** (same as origins)
+6. Copy your **Project ID** (format: `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`)
+7. Paste it in your `.env.local` file
+
+**Benefits of Your Own Project ID:**
+- ✅ Dedicated rate limits (no throttling)
+- ✅ Access to analytics dashboard
+- ✅ Custom branding in wallet connection modal
+- ✅ Error tracking and monitoring
+- ✅ Production-grade reliability
+- ✅ Priority support
+
+#### 2. Hardhat Environment Variables
+
 Create `.env` in `packages/hardhat/`:
+
 ```env
 ALCHEMY_API_KEY=your_alchemy_key
 DEPLOYER_PRIVATE_KEY=your_private_key
