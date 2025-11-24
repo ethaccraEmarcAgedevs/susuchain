@@ -1,4 +1,5 @@
-import { wagmiConnectors } from "./wagmiConnectors";
+import { createAppKit } from "@reown/appkit/react";
+import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
 import { Chain, createClient, fallback, http } from "viem";
 import { hardhat, mainnet } from "viem/chains";
 import { createConfig } from "wagmi";
@@ -12,9 +13,16 @@ export const enabledChains = targetNetworks.find((network: Chain) => network.id 
   ? targetNetworks
   : ([...targetNetworks, mainnet] as const);
 
-export const wagmiConfig = createConfig({
+// Create Wagmi adapter for Reown AppKit
+const wagmiAdapter = new WagmiAdapter({
+  networks: enabledChains as any,
+  projectId: scaffoldConfig.walletConnectProjectId,
+  ssr: true,
+});
+
+// Create Wagmi config using the adapter's wagmi config
+export const wagmiConfig = wagmiAdapter.wagmiConfig as any || createConfig({
   chains: enabledChains,
-  connectors: wagmiConnectors(),
   ssr: true,
   client({ chain }) {
     let rpcFallbacks = [http()];
@@ -40,5 +48,26 @@ export const wagmiConfig = createConfig({
           }
         : {}),
     });
+  },
+});
+
+// Initialize Reown AppKit
+createAppKit({
+  adapters: [wagmiAdapter],
+  networks: enabledChains as any,
+  projectId: scaffoldConfig.walletConnectProjectId,
+  metadata: {
+    name: "SusuChain",
+    description: "Traditional savings groups, blockchain-powered",
+    url: typeof window !== "undefined" ? window.location.origin : "https://susuchain.app",
+    icons: [typeof window !== "undefined" ? `${window.location.origin}/logo.svg` : "https://susuchain.app/logo.svg"],
+  },
+  features: {
+    analytics: true,
+  },
+  themeMode: "light",
+  themeVariables: {
+    "--w3m-accent": "#2563eb",
+    "--w3m-border-radius-master": "2px",
   },
 });
