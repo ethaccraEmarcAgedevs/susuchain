@@ -1,0 +1,6 @@
+<svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Flame icon for burner wallet -->
+  <path d="M12 2C12 2 8 6 8 10C8 12.2091 9.79086 14 12 14C14.2091 14 16 12.2091 16 10C16 6 12 2 12 2Z" fill="#FF4500" stroke="#FF4500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M12 14C12 14 10 16 10 18C10 19.1046 10.8954 20 12 20C13.1046 20 14 19.1046 14 18C14 16 12 14 12 14Z" fill="#FFA500" stroke="#FFA500" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="12" cy="10" r="1.5" fill="#FFD700"/>
+</svg>
