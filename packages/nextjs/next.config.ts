@@ -1,4 +1,5 @@
 import type { NextConfig } from "next";
+import webpack from "webpack";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
@@ -12,6 +13,14 @@ const nextConfig: NextConfig = {
   webpack: config => {
     config.resolve.fallback = { fs: false, net: false, tls: false };
     config.externals.push("pino-pretty", "lokijs", "encoding");
+
+    // Ignore optional wallet connector dependencies
+    config.plugins.push(
+      new webpack.IgnorePlugin({
+        resourceRegExp: /^(@gemini-wallet\/core|porto|porto\/internal)$/,
+      })
+    );
+
     return config;
   },
 };

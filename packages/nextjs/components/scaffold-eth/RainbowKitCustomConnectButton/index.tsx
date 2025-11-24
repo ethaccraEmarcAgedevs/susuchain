@@ -6,7 +6,7 @@ import { AddressInfoDropdown } from "./AddressInfoDropdown";
 import { AddressQRCodeModal } from "./AddressQRCodeModal";
 import { RevealBurnerPKModal } from "./RevealBurnerPKModal";
 import { WrongNetworkDropdown } from "./WrongNetworkDropdown";
-import { ConnectButton } from "@rainbow-me/rainbowkit";
+import { useAppKit, useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
 import { Address } from "viem";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
@@ -14,56 +14,49 @@ import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
 
 /**
  * Custom Wagmi Connect Button (watch balance + custom design)
+ * Now using Reown AppKit instead of RainbowKit
  */
 export const RainbowKitCustomConnectButton = () => {
   const networkColor = useNetworkColor();
   const { targetNetwork } = useTargetNetwork();
+  const { open } = useAppKit();
+  const { address, isConnected } = useAppKitAccount();
+  const { caipNetworkId } = useAppKitNetwork();
+
+  const blockExplorerAddressLink = address ? getBlockExplorerAddressLink(targetNetwork, address) : undefined;
+
+  // Extract chain ID from CAIP network ID (format: "eip155:chainId")
+  const chainId = caipNetworkId ? parseInt(caipNetworkId.split(":")[1]) : undefined;
+  const isWrongNetwork = chainId && chainId !== targetNetwork.id;
+
+  if (!isConnected || !address) {
+    return (
+      <button className="btn btn-primary btn-sm" onClick={() => open()} type="button">
+        Connect Wallet
+      </button>
+    );
+  }
+
+  if (isWrongNetwork) {
+    return <WrongNetworkDropdown />;
+  }
 
   return (
-    <ConnectButton.Custom>
-      {({ account, chain, openConnectModal, mounted }) => {
-        const connected = mounted && account && chain;
-        const blockExplorerAddressLink = account
-          ? getBlockExplorerAddressLink(targetNetwork, account.address)
-          : undefined;
-
-        return (
-          <>
-            {(() => {
-              if (!connected) {
-                return (
-                  <button className="btn btn-primary btn-sm" onClick={openConnectModal} type="button">
-                    Connect Wallet
-                  </button>
-                );
-              }
-
-              if (chain.unsupported || chain.id !== targetNetwork.id) {
-                return <WrongNetworkDropdown />;
-              }
-
-              return (
-                <>
-                  <div className="flex flex-col items-center mr-1">
-                    <Balance address={account.address as Address} className="min-h-0 h-auto" />
-                    <span className="text-xs" style={{ color: networkColor }}>
-                      {chain.name}
-                    </span>
-                  </div>
-                  <AddressInfoDropdown
-                    address={account.address as Address}
-                    displayName={account.displayName}
-                    ensAvatar={account.ensAvatar}
-                    blockExplorerAddressLink={blockExplorerAddressLink}
-                  />
-                  <AddressQRCodeModal address={account.address as Address} modalId="qrcode-modal" />
-                  <RevealBurnerPKModal />
-                </>
-              );
-            })()}
-          </>
-        );
-      }}
-    </ConnectButton.Custom>
+    <>
+      <div className="flex flex-col items-center mr-1">
+        <Balance address={address as Address} className="min-h-0 h-auto" />
+        <span className="text-xs" style={{ color: networkColor }}>
+          {targetNetwork.name}
+        </span>
+      </div>
+      <AddressInfoDropdown
+        address={address as Address}
+        displayName={address}
+        ensAvatar={undefined}
+        blockExplorerAddressLink={blockExplorerAddressLink}
+      />
+      <AddressQRCodeModal address={address as Address} modalId="qrcode-modal" />
+      <RevealBurnerPKModal />
+    </>
   );
 };
