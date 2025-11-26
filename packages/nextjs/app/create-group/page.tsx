@@ -8,6 +8,7 @@ import { useAccount } from "wagmi";
 import EFPProfile from "~~/components/EFPIntegration/EFPProfile";
 import ENSRegistration from "~~/components/ENSIntegration/ENSRegistration";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
+import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 
 interface FormData {
   groupName: string;
@@ -36,6 +37,7 @@ const CreateGroupPage = () => {
   const { writeContractAsync: createSusuGroup } = useScaffoldWriteContract({
     contractName: "SusuFactory",
   });
+  const { trackGroupCreation } = useAppKitAnalytics();
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -111,6 +113,14 @@ const CreateGroupPage = () => {
       });
 
       if (result) {
+        // Track group creation event
+        trackGroupCreation(
+          result, // groupAddress (transaction hash for now)
+          formData.groupName,
+          formData.contributionAmount,
+          parseInt(formData.maxMembers),
+        );
+
         // Redirect to the groups page or the specific group page
         router.push("/groups");
       }
