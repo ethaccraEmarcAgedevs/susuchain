@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Address, formatEther } from "viem";
 import { useAccount, useBalance } from "wagmi";
+import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 
 // Stage 4 will implement contract interactions
 
@@ -23,6 +24,7 @@ export const ContributionForm = ({
   const [isContributing, setIsContributing] = useState(false);
   const [error, setError] = useState("");
   const [hasContributed, setHasContributed] = useState(false);
+  const { trackContribution } = useAppKitAnalytics();
 
   // Get user's balance
   const { data: balance } = useBalance({
@@ -59,6 +61,10 @@ export const ContributionForm = ({
       // Make the contribution
       // For Stage 4 implementation - currently just a placeholder
       console.log("Contributing to round:", { groupAddress, requiredAmount });
+
+      // Track contribution event
+      trackContribution(groupAddress, formatEther(requiredAmount), currentRound);
+
       setHasContributed(true);
       onContributionSuccess?.();
     } catch (err: any) {
