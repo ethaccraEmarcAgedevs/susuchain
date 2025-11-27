@@ -44,6 +44,14 @@ const Home: NextPage = () => {
       <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
+            {/* Base Badge */}
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm mb-6">
+              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
+                <span className="text-white text-xs font-bold">B</span>
+              </div>
+              <span className="text-sm font-semibold text-gray-700">Built on Base Network</span>
+            </div>
+
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               <span className="text-blue-600">SusuChain</span>
               <br />
@@ -53,20 +61,39 @@ const Home: NextPage = () => {
             </h1>
             <p className="text-xl text-gray-600 mb-8 max-w-3xl mx-auto">
               Join decentralized savings circles with smart contracts, ENS names, and automated payouts. Build financial
-              security with your community, backed by blockchain technology.
+              security with your community, backed by Base network.
             </p>
 
+            {!isConnected ? (
+              <div className="flex flex-col items-center gap-4 mb-6">
+                <p className="text-lg font-semibold text-gray-700">Connect your wallet to get started</p>
+                <div className="text-sm text-gray-500">
+                  Click &quot;Connect Wallet&quot; in the top right corner
+                </div>
+              </div>
+            ) : null}
+
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link href="/create-group">
-                <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors">
-                  Create a Group
-                </button>
-              </Link>
-              <Link href="/groups">
-                <button className="px-8 py-3 bg-white hover:bg-gray-50 text-blue-600 font-semibold border-2 border-blue-600 rounded-lg transition-colors">
-                  Join a Group
-                </button>
-              </Link>
+              {isConnected ? (
+                <>
+                  <Link href="/create-group">
+                    <button className="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white font-semibold rounded-lg transition-colors shadow-lg">
+                      Create a Group
+                    </button>
+                  </Link>
+                  <Link href="/groups">
+                    <button className="px-8 py-3 bg-white hover:bg-gray-50 text-blue-600 font-semibold border-2 border-blue-600 rounded-lg transition-colors">
+                      Join a Group
+                    </button>
+                  </Link>
+                </>
+              ) : (
+                <div className="text-center">
+                  <p className="text-base text-gray-600 mb-2">
+                    👆 Look for the <span className="font-bold">Connect Wallet</span> button in the header
+                  </p>
+                </div>
+              )}
             </div>
           </div>
         </div>
