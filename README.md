@@ -56,9 +56,10 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 - **SusuToken.sol**: Governance token for future DAO features
 
 ### Frontend
-- **Next.js + React**: Modern web framework
-- **Tailwind CSS**: Mobile-first responsive design
-- **Wagmi + Viem**: Ethereum interactions
+- **Next.js 15 + React 19**: Modern web framework with App Router
+- **Tailwind CSS + DaisyUI**: Mobile-first responsive design
+- **Reown AppKit (WalletConnect)**: Multi-wallet connectivity
+- **Wagmi 2.x + Viem**: Type-safe Ethereum interactions
 - **ENS Integration**: Name resolution and profiles
 - **EFP Integration**: Member verification and reputation
 
@@ -72,6 +73,24 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 ### Base Sepolia Testnet
 - **SusuToken**: `0xf33ad6405169ca16C32C0C2E1508B9742888B2Ed`
 - **SusuFactory**: `0x8cBDa19492Aa069AAf4FA4d1534851BcB7276EA2`
+
+## 🔌 Wallet Connectivity
+
+SusuChain uses **Reown AppKit** (formerly WalletConnect Web3Modal) for wallet connectivity:
+
+- ✅ **Multi-wallet support**: MetaMask, Coinbase Wallet, Trust Wallet, Rainbow, and more
+- ✅ **Mobile-optimized**: Deep links for mobile wallet apps
+- ✅ **Network validation**: Automatic Base Sepolia detection and switching
+- ✅ **Error handling**: User-friendly error messages and retry mechanisms
+- ✅ **Session persistence**: Stay connected across page refreshes
+- ✅ **Analytics tracking**: Built-in analytics for connection metrics
+
+### Supported Wallets
+- MetaMask (Browser Extension & Mobile)
+- Coinbase Wallet
+- Trust Wallet
+- Rainbow Wallet
+- Any WalletConnect-compatible wallet
 
 ## 🚀 Quick Start
 
@@ -101,8 +120,38 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 
 4. **Access the application**
    - Open http://localhost:3000
-   - Connect your MetaMask wallet
-   - Switch to Base Sepolia network
+   - Click "Connect Wallet" in the header
+   - Select your preferred wallet from the modal
+   - Approve connection and switch to Base Sepolia network
+
+## 🚀 Deploy to Vercel
+
+SusuChain is optimized for Vercel deployment with one-click setup:
+
+[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https://github.com/ethaccraEmarcAgedevs/susuchain)
+
+### Manual Deployment Steps
+
+1. **Fork/Clone the repository**
+2. **Connect to Vercel**:
+   - Go to [vercel.com](https://vercel.com)
+   - Import your GitHub repository
+   - Select the `susuchain` project
+
+3. **Set Environment Variables** in Vercel Dashboard:
+   - `NEXT_PUBLIC_WALLET_CONNECT_PROJECT_ID` - Your WalletConnect Project ID (REQUIRED)
+   - `NEXT_PUBLIC_ALCHEMY_API_KEY` - Your Alchemy API key (Optional)
+
+4. **Deploy**: Vercel will automatically build and deploy
+
+📖 **Detailed deployment guide**: See [VERCEL_DEPLOYMENT.md](./VERCEL_DEPLOYMENT.md) for complete instructions.
+
+### Post-Deployment Checklist
+- ✅ Wallet connect button works
+- ✅ Can open wallet selection modal
+- ✅ Can connect MetaMask or other wallets
+- ✅ Base Sepolia network is selected
+- ✅ Can navigate to Create Group and Join Group pages
 
 ### Environment Setup
 
