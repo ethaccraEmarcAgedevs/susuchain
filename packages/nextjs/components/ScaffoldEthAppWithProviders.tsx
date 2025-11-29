@@ -7,6 +7,7 @@ import { WagmiProvider } from "wagmi";
 import { BurnerWalletInfo } from "~~/components/BurnerWalletInfo";
 import { Footer } from "~~/components/Footer";
 import { Header } from "~~/components/Header";
+import { SessionIndicator } from "~~/components/WalletConnect/SessionIndicator";
 import { WalletConnectionStatus } from "~~/components/WalletConnectionStatus";
 import { useInitializeNativeCurrencyPrice } from "~~/hooks/scaffold-eth";
 import { useNetworkCheck } from "~~/hooks/scaffold-eth/useNetworkCheck";
@@ -26,6 +27,7 @@ const ScaffoldEthApp = ({ children }: { children: React.ReactNode }) => {
       <Toaster />
       <BurnerWalletInfo />
       <WalletConnectionStatus />
+      <SessionIndicator />
     </>
   );
 };
