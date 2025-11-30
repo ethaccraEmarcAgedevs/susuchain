@@ -5,6 +5,7 @@ import { hardhat, mainnet } from "viem/chains";
 import { createConfig } from "wagmi";
 import scaffoldConfig, { DEFAULT_ALCHEMY_API_KEY, ScaffoldConfig } from "~~/scaffold.config";
 import { getAlchemyHttpUrl } from "~~/utils/scaffold-eth";
+import { getInitialTheme, LIGHT_THEME, DARK_THEME } from "~~/utils/appkit-theme";
 import { burnerWalletConnector } from "./burnerWallet";
 
 const { targetNetworks } = scaffoldConfig;
@@ -90,12 +91,6 @@ createAppKit({
     "1ae92b26df02f0abca6304df07debccd18262fdf5fe82daa81593582dac9a369", // Rainbow
     "fd20dc426fb37566d803205b19bbc1d4096b248ac04548e3cfb6b3a38bd033aa", // Coinbase Wallet
   ],
-  themeMode: "light",
-  themeVariables: {
-    "--w3m-color-mix": "#0052FF", // Base blue
-    "--w3m-color-mix-strength": 20,
-    "--w3m-accent": "#0052FF", // Base blue
-    "--w3m-border-radius-master": "8px",
-    "--w3m-font-family": "Inter, system-ui, sans-serif",
-  },
+  themeMode: typeof window !== "undefined" ? getInitialTheme() : "light",
+  themeVariables: typeof window !== "undefined" && getInitialTheme() === "dark" ? DARK_THEME : LIGHT_THEME,
 });
