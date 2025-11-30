@@ -32,8 +32,16 @@ export function trackEvent(event: Omit<AnalyticsEvent, "timestamp">): void {
   // Store events locally
   storeEvent(fullEvent);
 
-  // Future: Send to WalletConnect Cloud or other analytics service
-  // sendToAnalyticsService(fullEvent);
+  // Send to WalletConnect Cloud analytics
+  if (typeof window !== "undefined") {
+    import("./walletconnect-analytics").then(module => {
+      module.sendToWalletConnectCloud({
+        type: fullEvent.name,
+        properties: fullEvent.properties,
+        timestamp: fullEvent.timestamp,
+      });
+    });
+  }
 }
 
 /**

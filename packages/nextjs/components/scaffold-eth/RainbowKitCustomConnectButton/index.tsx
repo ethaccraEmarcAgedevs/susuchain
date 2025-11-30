@@ -11,6 +11,7 @@ import { useAppKit, useAppKitAccount, useAppKitNetwork } from "@reown/appkit/rea
 import { Address } from "viem";
 import toast from "react-hot-toast";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
+import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getRetryMessage, useWalletErrors } from "~~/hooks/scaffold-eth/useWalletErrors";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
@@ -28,8 +29,10 @@ export const RainbowKitCustomConnectButton = () => {
   const { address, isConnected } = useAppKitAccount();
   const { caipNetworkId } = useAppKitNetwork();
   const { handleWalletError } = useWalletErrors();
+  const { trackWalletModalOpen, trackWalletModalClose, trackWalletConnectionError } = useAppKitAnalytics();
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
+  const [connectionStartTime, setConnectionStartTime] = useState<number>(0);
 
   const blockExplorerAddressLink = address ? getBlockExplorerAddressLink(targetNetwork, address) : undefined;
 
@@ -41,16 +44,29 @@ export const RainbowKitCustomConnectButton = () => {
     if (isConnecting) return;
 
     setIsConnecting(true);
+    setConnectionStartTime(Date.now());
+
+    // Track modal open
+    trackWalletModalOpen();
 
     try {
       await open();
       setConnectionAttempts(0);
+
+      // Track modal close (will be connected)
+      trackWalletModalClose(true);
     } catch (error: any) {
       console.error("Connection error:", error);
       handleWalletError(error);
 
       const newAttempts = connectionAttempts + 1;
       setConnectionAttempts(newAttempts);
+
+      // Track connection error
+      trackWalletConnectionError("unknown", error.message || "Connection failed", newAttempts);
+
+      // Track modal close (not connected)
+      trackWalletModalClose(false);
 
       if (newAttempts < MAX_RETRY_ATTEMPTS) {
         toast(getRetryMessage(newAttempts, MAX_RETRY_ATTEMPTS), {

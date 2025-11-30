@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
+import { trackChainSwitch, trackWrongNetworkWarning } from "~~/lib/walletconnect-analytics";
 import scaffoldConfig from "~~/scaffold.config";
 
 const targetChainId = scaffoldConfig.targetNetworks[0].id;
@@ -13,6 +14,8 @@ const targetChainName = scaffoldConfig.targetNetworks[0].name;
  *
  * Checks if the user is on the correct network and provides
  * an option to switch networks if they're on the wrong one.
+ *
+ * Also tracks network mismatches and chain switches for analytics.
  */
 export function useNetworkCheck() {
   const chainId = useChainId();
@@ -29,6 +32,9 @@ export function useNetworkCheck() {
     const isCorrectNetwork = chainId === targetChainId;
 
     if (!isCorrectNetwork && !hasShownWarning) {
+      // Track wrong network warning
+      trackWrongNetworkWarning(chainId, targetChainId);
+
       const toastId = toast.error(
         <div className="text-sm">
           <p className="font-semibold mb-2">Wrong Network!</p>
@@ -67,8 +73,21 @@ export function useNetworkCheck() {
   }, [chainId, isConnected, hasShownWarning]);
 
   const handleSwitchNetwork = async () => {
+    const fromChain = chainId;
+
     try {
       await switchChain({ chainId: targetChainId });
+
+      // Track successful chain switch
+      if (fromChain) {
+        trackChainSwitch({
+          fromChain,
+          toChain: targetChainId,
+          success: true,
+          userInitiated: true,
+        });
+      }
+
       toast.success(`Switched to ${targetChainName}!`, {
         position: "top-center",
         duration: 2000,
@@ -76,6 +95,16 @@ export function useNetworkCheck() {
       setHasShownWarning(false);
     } catch (error: any) {
       console.error("Network switch error:", error);
+
+      // Track failed chain switch
+      if (fromChain) {
+        trackChainSwitch({
+          fromChain,
+          toChain: targetChainId,
+          success: false,
+          userInitiated: true,
+        });
+      }
 
       // User rejected the switch
       if (error.code === 4001) {
