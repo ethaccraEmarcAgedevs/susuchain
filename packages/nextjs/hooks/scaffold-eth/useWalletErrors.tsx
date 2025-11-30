@@ -1,140 +1,131 @@
 "use client";
 
-import { useEffect } from "react";
+import { useState, useCallback, useRef } from "react";
 import toast from "react-hot-toast";
+import {
+  parseAppKitError,
+  getExponentialBackoffDelay,
+  isRetryableError,
+  getRetryMessage as getRetryMsg,
+  AppKitErrorType,
+  ParsedError,
+} from "~~/utils/appkit-error-parser";
+
+const MAX_RETRY_ATTEMPTS = 3;
 
 /**
- * Hook for handling wallet connection errors with user-friendly messages
+ * Hook for handling wallet connection errors with user-friendly messages and retry logic
  */
 export function useWalletErrors() {
-  const handleWalletError = (error: any) => {
-    const errorInfo = parseWalletError(error);
+  const [currentError, setCurrentError] = useState<ParsedError | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [attemptNumber, setAttemptNumber] = useState(0);
+  const [isRetrying, setIsRetrying] = useState(false);
+  const retryTimeoutRef = useRef<NodeJS.Timeout>();
 
-    toast.error(
-      <div className="text-sm">
-        <p className="font-semibold mb-1">{errorInfo.message}</p>
-        <p className="text-xs opacity-90">{errorInfo.action}</p>
-      </div>,
-      {
-        duration: 5000,
-        position: "top-right",
-      },
-    );
-  };
+  const clearRetryTimeout = useCallback(() => {
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = undefined;
+    }
+  }, []);
 
-  return { handleWalletError };
-}
+  const resetRetryState = useCallback(() => {
+    setAttemptNumber(0);
+    setIsRetrying(false);
+    clearRetryTimeout();
+  }, [clearRetryTimeout]);
 
-interface ErrorInfo {
-  message: string;
-  action: string;
-  code?: string | number;
-}
+  const handleWalletError = useCallback(
+    (error: any, retryCallback?: () => Promise<void>) => {
+      const parsedError = parseAppKitError(error);
+      setCurrentError(parsedError);
 
-/**
- * Parse wallet errors into user-friendly messages
- */
-function parseWalletError(error: any): ErrorInfo {
-  // User rejected the connection
-  if (error.code === 4001 || error.code === "ACTION_REJECTED") {
-    return {
-      message: "Connection Rejected",
-      action: "Please approve the connection request in your wallet.",
-      code: 4001,
-    };
-  }
+      // Show toast for quick feedback
+      toast.error(
+        <div className="text-sm">
+          <p className="font-semibold mb-1">{parsedError.userMessage}</p>
+          <p className="text-xs opacity-90">{parsedError.action}</p>
+        </div>,
+        {
+          duration: 5000,
+          position: "top-right",
+        },
+      );
 
-  // Pending request already exists
-  if (error.code === -32002) {
-    return {
-      message: "Connection Request Pending",
-      action: "Check your wallet for a pending connection request.",
-      code: -32002,
-    };
-  }
+      // Handle automatic retry for retryable errors
+      if (
+        retryCallback &&
+        isRetryableError(error) &&
+        attemptNumber < MAX_RETRY_ATTEMPTS &&
+        parsedError.type !== AppKitErrorType.USER_REJECTED
+      ) {
+        const nextAttempt = attemptNumber + 1;
+        setAttemptNumber(nextAttempt);
+        setIsRetrying(true);
 
-  // Network/RPC errors
-  if (error.message?.toLowerCase().includes("network") || error.message?.toLowerCase().includes("fetch")) {
-    return {
-      message: "Network Connection Failed",
-      action: "Check your internet connection and try again.",
-    };
-  }
+        const delay = getExponentialBackoffDelay(nextAttempt);
 
-  // RPC errors
-  if (error.message?.toLowerCase().includes("rpc") || error.code === -32603) {
-    return {
-      message: "RPC Connection Failed",
-      action: "The network is experiencing issues. Please try again later.",
-      code: -32603,
-    };
-  }
+        toast.loading(getRetryMsg(nextAttempt, MAX_RETRY_ATTEMPTS), {
+          duration: delay,
+        });
 
-  // Chain not added to wallet
-  if (error.code === 4902 || error.message?.toLowerCase().includes("unrecognized chain")) {
-    return {
-      message: "Network Not Added",
-      action: "Please add the network to your wallet and try again.",
-      code: 4902,
-    };
-  }
+        clearRetryTimeout();
+        retryTimeoutRef.current = setTimeout(async () => {
+          try {
+            await retryCallback();
+            resetRetryState();
+            toast.success("Connection successful!");
+          } catch (retryError) {
+            handleWalletError(retryError, retryCallback);
+          } finally {
+            setIsRetrying(false);
+          }
+        }, delay);
+      } else {
+        resetRetryState();
+      }
 
-  // Wallet locked
-  if (error.message?.toLowerCase().includes("locked") || error.message?.toLowerCase().includes("unlock")) {
-    return {
-      message: "Wallet Locked",
-      action: "Please unlock your wallet and try again.",
-    };
-  }
+      // Open modal for errors requiring user action
+      if (parsedError.requiresUserAction || attemptNumber >= MAX_RETRY_ATTEMPTS) {
+        setIsModalOpen(true);
+      }
+    },
+    [attemptNumber, resetRetryState, clearRetryTimeout],
+  );
 
-  // Insufficient funds for gas
-  if (error.message?.toLowerCase().includes("insufficient funds")) {
-    return {
-      message: "Insufficient Funds",
-      action: "You need ETH to pay for transaction gas fees.",
-    };
-  }
+  const closeErrorModal = useCallback(() => {
+    setIsModalOpen(false);
+    setCurrentError(null);
+    resetRetryState();
+  }, [resetRetryState]);
 
-  // Wallet not found/installed
-  if (error.message?.toLowerCase().includes("not found") || error.message?.toLowerCase().includes("no provider")) {
-    return {
-      message: "Wallet Not Detected",
-      action: "Please install a Web3 wallet like MetaMask to continue.",
-    };
-  }
+  const retryConnection = useCallback(
+    async (retryCallback?: () => Promise<void>) => {
+      if (!retryCallback) return;
 
-  // User denied account access
-  if (error.message?.toLowerCase().includes("denied") || error.message?.toLowerCase().includes("permission")) {
-    return {
-      message: "Access Denied",
-      action: "Please grant permission to connect your wallet.",
-    };
-  }
+      setIsRetrying(true);
+      try {
+        await retryCallback();
+        toast.success("Connection successful!");
+        closeErrorModal();
+      } catch (error) {
+        handleWalletError(error, retryCallback);
+      } finally {
+        setIsRetrying(false);
+      }
+    },
+    [handleWalletError, closeErrorModal],
+  );
 
-  // Timeout errors
-  if (error.message?.toLowerCase().includes("timeout")) {
-    return {
-      message: "Connection Timeout",
-      action: "The request took too long. Please try again.",
-    };
-  }
-
-  // Generic fallback
   return {
-    message: "Connection Failed",
-    action: "Please try connecting again or use a different wallet.",
+    handleWalletError,
+    currentError,
+    isModalOpen,
+    closeErrorModal,
+    retryConnection,
+    attemptNumber,
+    isRetrying,
+    maxAttempts: MAX_RETRY_ATTEMPTS,
   };
-}
-
-/**
- * Get retry-friendly error message
- */
-export function getRetryMessage(attemptNumber: number, maxAttempts: number): string {
-  const remaining = maxAttempts - attemptNumber;
-
-  if (remaining === 0) {
-    return "Maximum retry attempts reached. Please check your wallet and network settings.";
-  }
-
-  return `Connection failed. ${remaining} ${remaining === 1 ? "attempt" : "attempts"} remaining.`;
 }
