@@ -4,6 +4,7 @@ export * from "./useCopyToClipboard";
 export * from "./useDeployedContractInfo";
 export * from "./useFetchBlocks";
 export * from "./useInitializeNativeCurrencyPrice";
+export * from "./useMobileDetection";
 export * from "./useNetworkColor";
 export * from "./useOutsideClick";
 export * from "./useRequireChain";
