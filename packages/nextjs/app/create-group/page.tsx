@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { parseEther } from "viem";
 import { useAccount } from "wagmi";
+import { useRequireAuth } from "~~/hooks/scaffold-eth/useRequireAuth";
 import EFPProfile from "~~/components/EFPIntegration/EFPProfile";
 import ENSRegistration from "~~/components/ENSIntegration/ENSRegistration";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
@@ -21,6 +22,7 @@ interface FormData {
 
 const CreateGroupPage = () => {
   const router = useRouter();
+  useRequireAuth();
   const { address: userAddress, isConnected } = useAccount();
   const [formData, setFormData] = useState<FormData>({
     groupName: "",
