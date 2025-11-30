@@ -3,13 +3,14 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { parseEther } from "viem";
+import { parseEther, Hash } from "viem";
 import { useAccount } from "wagmi";
 import { useRequireAuth } from "~~/hooks/scaffold-eth/useRequireAuth";
 import EFPProfile from "~~/components/EFPIntegration/EFPProfile";
 import ENSRegistration from "~~/components/ENSIntegration/ENSRegistration";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
+import { useTransactionStatus } from "~~/hooks/scaffold-eth/useTransactionStatus";
 
 interface FormData {
   groupName: string;
@@ -35,11 +36,33 @@ const CreateGroupPage = () => {
   const [isENSValid, setIsENSValid] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
   const [error, setError] = useState("");
+  const [txHash, setTxHash] = useState<Hash | undefined>();
 
   const { writeContractAsync: createSusuGroup } = useScaffoldWriteContract({
     contractName: "SusuFactory",
   });
   const { trackGroupCreation } = useAppKitAnalytics();
+
+  useTransactionStatus({
+    hash: txHash,
+    onSuccess: (receipt) => {
+      // Track group creation event
+      trackGroupCreation(
+        receipt.transactionHash,
+        formData.groupName,
+        formData.contributionAmount,
+        parseInt(formData.maxMembers),
+      );
+      // Redirect to groups page
+      router.push("/groups");
+    },
+    onError: (error) => {
+      setError(error.message || "Transaction failed");
+      setIsCreating(false);
+    },
+    successMessage: "Group created successfully!",
+    pendingMessage: "Creating your Susu group...",
+  });
 
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -103,7 +126,7 @@ const CreateGroupPage = () => {
       const intervalInSeconds = getIntervalInSeconds(formData.contributionInterval);
       const contributionAmountWei = parseEther(formData.contributionAmount);
 
-      const result = await createSusuGroup({
+      const hash = await createSusuGroup({
         functionName: "createSusuGroup",
         args: [
           formData.groupName,
@@ -114,22 +137,13 @@ const CreateGroupPage = () => {
         ],
       });
 
-      if (result) {
-        // Track group creation event
-        trackGroupCreation(
-          result, // groupAddress (transaction hash for now)
-          formData.groupName,
-          formData.contributionAmount,
-          parseInt(formData.maxMembers),
-        );
-
-        // Redirect to the groups page or the specific group page
-        router.push("/groups");
+      if (hash) {
+        setTxHash(hash);
+        // Transaction status hook will handle the rest
       }
     } catch (err: any) {
       console.error("Error creating group:", err);
       setError(err.message || "Failed to create group");
-    } finally {
       setIsCreating(false);
     }
   };
