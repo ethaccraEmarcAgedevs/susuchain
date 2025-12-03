@@ -68,20 +68,18 @@ export function useRequireChain({
     }
 
     try {
-      // We need to construct the chain object
+      // SusuChain operates only on Base Mainnet
       const chains = await import("viem/chains");
       const chainMap: Record<number, any> = {
-        8453: chains.base,
-        84532: chains.baseSepolia,
-        10: chains.optimism,
-        11155420: chains.optimismSepolia,
-        1: chains.mainnet,
+        8453: chains.base, // Base Mainnet only
       };
 
       const targetChain = chainMap[requiredChainId];
       if (targetChain) {
         await switchNetwork(targetChain);
         toast.success(`Switched to ${requiredChainInfo.name}`);
+      } else {
+        toast.error("SusuChain only supports Base Mainnet");
       }
     } catch (error: any) {
       console.error("Failed to switch network:", error);

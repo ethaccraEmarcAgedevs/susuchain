@@ -1,7 +1,7 @@
 "use client";
 
 import { Chain } from "viem";
-import { base, baseSepolia, optimism, optimismSepolia, mainnet } from "viem/chains";
+import { base } from "viem/chains";
 
 interface ChainBadgeProps {
   chainId: number;
@@ -9,12 +9,9 @@ interface ChainBadgeProps {
   size?: "sm" | "md" | "lg";
 }
 
+// SusuChain configuration for Base Mainnet only
 const chainConfig: Record<number, { name: string; color: string; isTestnet: boolean }> = {
-  [base.id]: { name: "Base", color: "bg-blue-600 text-white", isTestnet: false },
-  [baseSepolia.id]: { name: "Base Sepolia", color: "bg-blue-400 text-white", isTestnet: true },
-  [optimism.id]: { name: "Optimism", color: "bg-red-600 text-white", isTestnet: false },
-  [optimismSepolia.id]: { name: "OP Sepolia", color: "bg-red-400 text-white", isTestnet: true },
-  [mainnet.id]: { name: "Ethereum", color: "bg-purple-600 text-white", isTestnet: false },
+  [base.id]: { name: "Base Mainnet", color: "bg-blue-600 text-white", isTestnet: false },
 };
 
 export const ChainBadge = ({ chainId, showWarning = true, size = "sm" }: ChainBadgeProps) => {
@@ -22,8 +19,8 @@ export const ChainBadge = ({ chainId, showWarning = true, size = "sm" }: ChainBa
 
   if (!chain) {
     return (
-      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-500 text-white">
-        Unknown Chain
+      <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-600 text-white">
+        Wrong Network
       </span>
     );
   }
@@ -48,5 +45,5 @@ export const ChainBadge = ({ chainId, showWarning = true, size = "sm" }: ChainBa
 };
 
 export const getChainInfo = (chainId: number) => {
-  return chainConfig[chainId] || { name: "Unknown", color: "bg-gray-500", isTestnet: false };
+  return chainConfig[chainId] || { name: "Wrong Network", color: "bg-red-600", isTestnet: false };
 };

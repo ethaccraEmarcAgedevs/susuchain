@@ -90,7 +90,7 @@ export const Header = () => {
           </div>
           <div className="flex flex-col">
             <span className="font-bold leading-tight text-blue-600">SusuChain</span>
-            <span className="text-xs text-gray-600">Multi-Chain Savings</span>
+            <span className="text-xs text-gray-600">On Base Mainnet</span>
           </div>
         </Link>
         <ul className="hidden lg:flex lg:flex-nowrap menu menu-horizontal px-1 gap-2">
