@@ -72,8 +72,8 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 
 ### Base Mainnet
 - **Network**: Base (Chain ID: 8453)
-- **SusuToken**: TBD (Deploy to mainnet)
-- **SusuFactory**: TBD (Deploy to mainnet)
+- **SusuToken**: `0x35519d54af6F5537AB1D4FD6F4F79B3Ed86De065`
+- **SusuFactory**: `0xf55B73a292C0f6CED5C919AF070673FBA94a73eF`
 
 ## 🔌 Wallet Connectivity
 

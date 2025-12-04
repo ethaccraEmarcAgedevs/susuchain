@@ -5,7 +5,7 @@
 import { GenericContractsDeclaration } from "~~/utils/scaffold-eth/contract";
 
 const deployedContracts = {
-  84532: {
+  8453: {
     SusuGroup: {
       address: "0x0000000000000000000000000000000000000000", // This will be overridden when we specify the actual address
       abi: [
@@ -72,7 +72,7 @@ const deployedContracts = {
       ],
     },
     SusuFactory: {
-      address: "0x8cBDa19492Aa069AAf4FA4d1534851BcB7276EA2",
+      address: "0xf55B73a292C0f6CED5C919AF070673FBA94a73eF",
       abi: [
         {
           inputs: [
@@ -650,7 +650,7 @@ const deployedContracts = {
       deployedOnBlock: 30056758,
     },
     SusuToken: {
-      address: "0xf33ad6405169ca16C32C0C2E1508B9742888B2Ed",
+      address: "0x35519d54af6F5537AB1D4FD6F4F79B3Ed86De065",
       abi: [
         {
           inputs: [
