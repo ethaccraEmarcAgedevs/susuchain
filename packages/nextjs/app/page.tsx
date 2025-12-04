@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { NextPage } from "next";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import SusuGroupCard from "~~/components/SusuGroup/SusuGroupCard";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
@@ -67,9 +67,7 @@ const Home: NextPage = () => {
             {!isConnected ? (
               <div className="flex flex-col items-center gap-4 mb-6">
                 <p className="text-lg font-semibold text-gray-700">Connect your wallet to get started</p>
-                <div className="text-sm text-gray-500">
-                  Click &quot;Connect Wallet&quot; in the top right corner
-                </div>
+                <div className="text-sm text-gray-500">Click &quot;Connect Wallet&quot; in the top right corner</div>
               </div>
             ) : null}
 
@@ -235,22 +233,43 @@ const GroupCardWrapper = ({ groupAddress }: { groupAddress: Address }) => {
   });
 
   // For the wrapper component, we'll use factory data only
-  // const { data: groupInfo } = useReadContract({
-  //   address: groupAddress,
-  //   abi: [], // Would need proper ABI here
-  //   functionName: "getGroupInfo",
-  // });
-  // groupInfo removed for Stage 3 simplification
+  // Fetch live group info for accurate member count and status
+  const { data: groupInfo } = useReadContract({
+    address: groupAddress,
+    abi: [
+      {
+        inputs: [],
+        name: "getGroupInfo",
+        outputs: [
+          { internalType: "string", name: "name", type: "string" },
+          { internalType: "string", name: "ensName", type: "string" },
+          { internalType: "uint256", name: "contribution", type: "uint256" },
+          { internalType: "uint256", name: "interval", type: "uint256" },
+          { internalType: "uint256", name: "maxMems", type: "uint256" },
+          { internalType: "uint256", name: "currentMems", type: "uint256" },
+          { internalType: "uint256", name: "round", type: "uint256" },
+          { internalType: "bool", name: "active", type: "bool" },
+          { internalType: "address", name: "currentBeneficiary", type: "address" },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "getGroupInfo",
+    query: {
+      enabled: !!groupAddress && !!groupDetails,
+    },
+  });
 
   if (!groupDetails) {
     return <div className="animate-pulse bg-gray-200 h-80 rounded-xl"></div>;
   }
 
-  const [groupName, ensName, creator, contributionAmount, maxMembers] = groupDetails;
-  // Mock group info for display - Stage 3 uses factory data primarily
-  const currentMembers = 1;
-  const currentRound = 0;
-  const active = true;
+  const [groupName, ensName, creator, contributionAmount, maxMembers, , isActive] = groupDetails;
+
+  const currentMembers = groupInfo ? Number(groupInfo[5]) : 1;
+  const currentRound = groupInfo ? Number(groupInfo[6]) : 0;
+  const active = groupInfo ? (groupInfo[7] as boolean) : isActive;
 
   const groupData = {
     groupAddress,
@@ -259,8 +278,8 @@ const GroupCardWrapper = ({ groupAddress }: { groupAddress: Address }) => {
     creator: creator,
     contributionAmount: contributionAmount,
     maxMembers: Number(maxMembers),
-    currentMembers: Number(currentMembers),
-    currentRound: Number(currentRound),
+    currentMembers,
+    currentRound,
     isActive: active,
   };
 

@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from "next/server";
 import { cookies } from "next/headers";
-import { getIronSession, IronSession, SessionOptions } from "iron-session";
+import { NextRequest, NextResponse } from "next/server";
+import { IronSession, SessionOptions, getIronSession } from "iron-session";
 import { SiweMessage } from "siwe";
 
 const sessionOptions: SessionOptions = {

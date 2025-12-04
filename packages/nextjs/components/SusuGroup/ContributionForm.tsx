@@ -1,9 +1,28 @@
 import { useEffect, useState } from "react";
+import toast from "react-hot-toast";
 import { Address, formatEther } from "viem";
-import { useAccount, useBalance } from "wagmi";
+import { useAccount, useBalance, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 
-// Stage 4 will implement contract interactions
+const SUSU_GROUP_ABI = [
+  {
+    inputs: [],
+    name: "contributeToRound",
+    outputs: [],
+    stateMutability: "payable",
+    type: "function",
+  },
+  {
+    inputs: [
+      { internalType: "address", name: "_member", type: "address" },
+      { internalType: "uint256", name: "roundNumber", type: "uint256" },
+    ],
+    name: "hasContributedToRound",
+    outputs: [{ internalType: "bool", name: "", type: "bool" }],
+    stateMutability: "view",
+    type: "function",
+  },
+] as const;
 
 interface ContributionFormProps {
   groupAddress: Address;
@@ -21,9 +40,7 @@ export const ContributionForm = ({
   className = "",
 }: ContributionFormProps) => {
   const { address: userAddress } = useAccount();
-  const [isContributing, setIsContributing] = useState(false);
   const [error, setError] = useState("");
-  const [hasContributed, setHasContributed] = useState(false);
   const { trackContribution } = useAppKitAnalytics();
 
   // Get user's balance
@@ -31,49 +48,87 @@ export const ContributionForm = ({
     address: userAddress,
   });
 
-  // Simplified contribution status check for TypeScript compatibility
+  // Contract write hook
+  const { writeContractAsync, data: hash, isPending } = useWriteContract();
+
+  // Wait for transaction receipt
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({
+    hash,
+  });
+
+  // Check if user has already contributed to this round
   const [hasContributedToRound, setHasContributedToRound] = useState(false);
-  // Check contribution status - simplified for Stage 3 completion
-  useEffect(() => {
-    // Stage 4 will implement proper contract reading
-    setHasContributedToRound(false);
-  }, [userAddress, currentRound]);
 
   useEffect(() => {
-    setHasContributed(hasContributedToRound || false);
-  }, [hasContributedToRound]);
+    const checkContribution = async () => {
+      if (!userAddress || currentRound === 0) {
+        setHasContributedToRound(false);
+        return;
+      }
+
+      try {
+        const { readContract } = await import("wagmi/actions");
+        const { default: wagmiConfig } = await import("~~/services/web3/wagmiConfig");
+
+        const hasContributed = await readContract(wagmiConfig, {
+          address: groupAddress,
+          abi: SUSU_GROUP_ABI,
+          functionName: "hasContributedToRound",
+          args: [userAddress, BigInt(currentRound)],
+        });
+
+        setHasContributedToRound(hasContributed as boolean);
+      } catch (error) {
+        console.error("Error checking contribution status:", error);
+        setHasContributedToRound(false);
+      }
+    };
+
+    checkContribution();
+  }, [userAddress, currentRound, groupAddress, isConfirmed]);
 
   const handleContribute = async () => {
-    if (!userAddress || hasContributed || isContributing) return;
+    if (!userAddress || hasContributedToRound || isPending) return;
 
-    setIsContributing(true);
     setError("");
 
     try {
       // Check if user has sufficient balance
-      const requiredAmount = contributionAmount;
       const userBalance = balance?.value || 0n;
 
-      if (userBalance < requiredAmount) {
+      if (userBalance < contributionAmount) {
         throw new Error("Insufficient balance for contribution");
       }
 
-      // Make the contribution
-      // For Stage 4 implementation - currently just a placeholder
-      console.log("Contributing to round:", { groupAddress, requiredAmount });
+      // Show pending toast
+      const toastId = toast.loading("Submitting contribution...");
+
+      // Call the smart contract
+      await writeContractAsync({
+        address: groupAddress,
+        abi: SUSU_GROUP_ABI,
+        functionName: "contributeToRound",
+        value: contributionAmount,
+      });
+
+      // Update toast
+      toast.loading("Waiting for confirmation...", { id: toastId });
 
       // Track contribution event
-      trackContribution(groupAddress, formatEther(requiredAmount), currentRound);
+      trackContribution(groupAddress, formatEther(contributionAmount), currentRound);
 
-      setHasContributed(true);
+      // Success will be handled by useEffect watching isConfirmed
+      toast.success(`Contribution of ${formatEther(contributionAmount)} ETH confirmed!`, { id: toastId });
       onContributionSuccess?.();
     } catch (err: any) {
       console.error("Contribution error:", err);
-      setError(err.message || "Failed to make contribution");
-    } finally {
-      setIsContributing(false);
+      const errorMessage = err.message || "Failed to make contribution";
+      setError(errorMessage);
+      toast.error(errorMessage);
     }
   };
+
+  const isContributing = isPending || isConfirming;
 
   if (!userAddress) {
     return (
@@ -94,7 +149,7 @@ export const ContributionForm = ({
     );
   }
 
-  if (hasContributed) {
+  if (hasContributedToRound) {
     return (
       <div className={`p-6 bg-green-50 border border-green-200 rounded-lg ${className}`}>
         <div className="text-center">

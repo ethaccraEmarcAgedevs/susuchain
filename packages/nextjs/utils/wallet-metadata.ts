@@ -110,15 +110,11 @@ export function getWalletMetadata(walletNameOrId: string): WalletMetadata {
   }
 
   // Search by name
-  const byName = Object.values(WALLET_METADATA).find(
-    wallet => wallet.name.toLowerCase() === normalizedKey
-  );
+  const byName = Object.values(WALLET_METADATA).find(wallet => wallet.name.toLowerCase() === normalizedKey);
   if (byName) return byName;
 
   // Search by ID
-  const byId = Object.values(WALLET_METADATA).find(
-    wallet => wallet.id === normalizedKey
-  );
+  const byId = Object.values(WALLET_METADATA).find(wallet => wallet.id === normalizedKey);
   if (byId) return byId;
 
   // Default to WalletConnect
@@ -136,9 +132,7 @@ export function isMobileWalletConnect(connector?: any): boolean {
 
   // Check if user agent is mobile
   if (typeof window === "undefined") return false;
-  const isMobile = /Mobile|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
-    navigator.userAgent
-  );
+  const isMobile = /Mobile|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
   return isWC && isMobile;
 }

@@ -1,21 +1,18 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useAppKit } from "@reown/appkit/react";
-import { QrCodeIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
+import { useEffect, useState } from "react";
 import { WalletDeepLink } from "./WalletDeepLink";
-import { getPopularWallets } from "~~/utils/wallet-deeplinks";
+import { useAppKit } from "@reown/appkit/react";
+import { DevicePhoneMobileIcon, QrCodeIcon } from "@heroicons/react/24/outline";
 import { useMobileDetection } from "~~/hooks/scaffold-eth/useMobileDetection";
+import { getPopularWallets } from "~~/utils/wallet-deeplinks";
 
 interface MobileWalletSelectorProps {
   onConnect?: () => void;
   showQRFallback?: boolean;
 }
 
-export const MobileWalletSelector = ({
-  onConnect,
-  showQRFallback = true,
-}: MobileWalletSelectorProps) => {
+export const MobileWalletSelector = ({ onConnect, showQRFallback = true }: MobileWalletSelectorProps) => {
   const { isDesktop } = useMobileDetection();
   const { open } = useAppKit();
   const [wcUri, setWcUri] = useState<string>("");
@@ -51,9 +48,7 @@ export const MobileWalletSelector = ({
         <div className="text-center mb-6">
           <QrCodeIcon className="h-12 w-12 mx-auto mb-3 text-blue-600" />
           <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
-          <p className="text-sm text-gray-600">
-            Scan with your mobile wallet app to connect
-          </p>
+          <p className="text-sm text-gray-600">Scan with your mobile wallet app to connect</p>
         </div>
         <button
           onClick={handleOpenAppKit}
@@ -72,10 +67,7 @@ export const MobileWalletSelector = ({
         <DevicePhoneMobileIcon className="h-12 w-12 mx-auto mb-3 text-blue-600" />
         <h3 className="text-xl font-bold text-gray-900 mb-2">Connect Your Wallet</h3>
         <p className="text-sm text-gray-600">
-          {showMode === "wallets"
-            ? "Choose your preferred wallet app"
-            : "Scan QR code with your wallet"
-          }
+          {showMode === "wallets" ? "Choose your preferred wallet app" : "Scan QR code with your wallet"}
         </p>
       </div>
 
@@ -85,9 +77,7 @@ export const MobileWalletSelector = ({
           <button
             onClick={() => setShowMode("wallets")}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-              showMode === "wallets"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              showMode === "wallets" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             Wallets
@@ -95,9 +85,7 @@ export const MobileWalletSelector = ({
           <button
             onClick={() => setShowMode("qr")}
             className={`flex-1 py-2 px-4 rounded-lg font-medium transition-colors ${
-              showMode === "qr"
-                ? "bg-blue-600 text-white"
-                : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+              showMode === "qr" ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-700 hover:bg-gray-200"
             }`}
           >
             QR Code
@@ -109,12 +97,7 @@ export const MobileWalletSelector = ({
         <div className="space-y-3">
           {popularWallets.map(wallet => (
             <div key={wallet.id} className="space-y-2">
-              <WalletDeepLink
-                wallet={wallet}
-                wcUri={wcUri}
-                onConnect={onConnect}
-                variant="default"
-              />
+              <WalletDeepLink wallet={wallet} wcUri={wcUri} onConnect={onConnect} variant="default" />
             </div>
           ))}
 
@@ -146,9 +129,7 @@ export const MobileWalletSelector = ({
       {/* Help text */}
       <div className="mt-6 p-4 bg-blue-50 rounded-lg">
         <p className="text-xs text-blue-900 font-medium mb-1">New to crypto?</p>
-        <p className="text-xs text-blue-700">
-          Download a wallet app to get started with SusuChain
-        </p>
+        <p className="text-xs text-blue-700">Download a wallet app to get started with SusuChain</p>
       </div>
     </div>
   );

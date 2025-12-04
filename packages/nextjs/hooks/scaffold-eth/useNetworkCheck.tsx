@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import toast from "react-hot-toast";
+import { useAccount, useChainId, useSwitchChain } from "wagmi";
 import { trackChainSwitch, trackWrongNetworkWarning } from "~~/lib/walletconnect-analytics";
 import scaffoldConfig from "~~/scaffold.config";
 

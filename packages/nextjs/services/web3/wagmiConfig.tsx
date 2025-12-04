@@ -1,12 +1,12 @@
-import { createAppKit } from "@reown/appkit/react";
+import { burnerWalletConnector } from "./burnerWallet";
 import { WagmiAdapter } from "@reown/appkit-adapter-wagmi";
+import { createAppKit } from "@reown/appkit/react";
 import { Chain, createClient, fallback, http } from "viem";
 import { hardhat, mainnet } from "viem/chains";
 import { createConfig } from "wagmi";
 import scaffoldConfig, { DEFAULT_ALCHEMY_API_KEY, ScaffoldConfig } from "~~/scaffold.config";
+import { DARK_THEME, LIGHT_THEME, getInitialTheme } from "~~/utils/appkit-theme";
 import { getAlchemyHttpUrl } from "~~/utils/scaffold-eth";
-import { getInitialTheme, LIGHT_THEME, DARK_THEME } from "~~/utils/appkit-theme";
-import { burnerWalletConnector } from "./burnerWallet";
 
 const { targetNetworks } = scaffoldConfig;
 

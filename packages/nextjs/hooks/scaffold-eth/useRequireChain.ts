@@ -15,11 +15,7 @@ interface UseRequireChainOptions {
  * Hook to ensure user is on the required chain
  * Displays warnings and provides chain switching functionality
  */
-export function useRequireChain({
-  requiredChainId,
-  onWrongChain,
-  showAutoPrompt = true,
-}: UseRequireChainOptions) {
+export function useRequireChain({ requiredChainId, onWrongChain, showAutoPrompt = true }: UseRequireChainOptions) {
   const { caipNetwork, switchNetwork } = useAppKitNetwork();
   const [hasShownPrompt, setHasShownPrompt] = useState(false);
 
@@ -44,13 +40,10 @@ export function useRequireChain({
     if (showAutoPrompt && !hasShownPrompt && !isCorrectChain) {
       setHasShownPrompt(true);
 
-      toast.error(
-        `Wrong Network: This feature requires ${requiredChainInfo.name} network. Please switch networks.`,
-        {
-          duration: 8000,
-          position: "top-center",
-        },
-      );
+      toast.error(`Wrong Network: This feature requires ${requiredChainInfo.name} network. Please switch networks.`, {
+        duration: 8000,
+        position: "top-center",
+      });
     }
   }, [currentChainId, isCorrectChain, hasShownPrompt, showAutoPrompt]);
 

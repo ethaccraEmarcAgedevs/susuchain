@@ -1,14 +1,14 @@
 "use client";
 
-import { useState, useCallback, useRef } from "react";
+import { useCallback, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import {
-  parseAppKitError,
-  getExponentialBackoffDelay,
-  isRetryableError,
-  getRetryMessage as getRetryMsg,
   AppKitErrorType,
   ParsedError,
+  getExponentialBackoffDelay,
+  getRetryMessage as getRetryMsg,
+  isRetryableError,
+  parseAppKitError,
 } from "~~/utils/appkit-error-parser";
 
 const MAX_RETRY_ATTEMPTS = 3;

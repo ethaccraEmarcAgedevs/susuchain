@@ -1,7 +1,7 @@
 "use client";
 
 import { WalletIcon } from "./WalletIcon";
-import { getWalletMetadata, getConnectionMethodLabel } from "~~/utils/wallet-metadata";
+import { getConnectionMethodLabel, getWalletMetadata } from "~~/utils/wallet-metadata";
 
 interface WalletBadgeProps {
   walletName: string;
@@ -43,13 +43,9 @@ export const WalletBadge = ({
         <WalletIcon walletName={walletName} size="md" showBackground={true} />
         <div className="flex flex-col">
           <span className="text-sm font-semibold text-gray-900">{wallet.name}</span>
-          {showAddress && address && (
-            <span className="text-xs text-gray-500 font-mono">{formatAddress(address)}</span>
-          )}
+          {showAddress && address && <span className="text-xs text-gray-500 font-mono">{formatAddress(address)}</span>}
           {showConnectionType && (
-            <span className="text-xs text-gray-400">
-              {getConnectionMethodLabel(connectionType, isMobile)}
-            </span>
+            <span className="text-xs text-gray-400">{getConnectionMethodLabel(connectionType, isMobile)}</span>
           )}
         </div>
       </div>
@@ -62,9 +58,7 @@ export const WalletBadge = ({
       <WalletIcon walletName={walletName} size="sm" showBackground={true} />
       <div className="flex flex-col">
         <span className="text-sm font-medium text-gray-900">{wallet.name}</span>
-        {showAddress && address && (
-          <span className="text-xs text-gray-500 font-mono">{formatAddress(address)}</span>
-        )}
+        {showAddress && address && <span className="text-xs text-gray-500 font-mono">{formatAddress(address)}</span>}
       </div>
     </div>
   );

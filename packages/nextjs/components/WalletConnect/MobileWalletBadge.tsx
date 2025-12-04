@@ -1,7 +1,7 @@
 "use client";
 
-import { DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
 import { WalletIcon } from "./WalletIcon";
+import { DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
 import { getWalletMetadata } from "~~/utils/wallet-metadata";
 
 interface MobileWalletBadgeProps {
@@ -36,13 +36,9 @@ export const MobileWalletBadge = ({
       <div className="flex flex-col">
         <div className="flex items-center gap-2">
           <span className="text-sm font-semibold text-gray-900">{wallet.name}</span>
-          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">
-            Mobile
-          </span>
+          <span className="px-2 py-0.5 bg-blue-100 text-blue-700 text-[10px] font-bold rounded uppercase">Mobile</span>
         </div>
-        {showAddress && address && (
-          <span className="text-xs text-gray-600 font-mono">{formatAddress(address)}</span>
-        )}
+        {showAddress && address && <span className="text-xs text-gray-600 font-mono">{formatAddress(address)}</span>}
         <span className="text-xs text-blue-600 font-medium">WalletConnect</span>
       </div>
     </div>

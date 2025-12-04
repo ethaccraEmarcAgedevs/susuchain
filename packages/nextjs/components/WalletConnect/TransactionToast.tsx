@@ -1,7 +1,7 @@
 "use client";
 
 import { Hash } from "viem";
-import { CheckCircleIcon, ExclamationCircleIcon, ClockIcon } from "@heroicons/react/24/outline";
+import { CheckCircleIcon, ClockIcon, ExclamationCircleIcon } from "@heroicons/react/24/outline";
 
 interface TransactionToastProps {
   status: "pending" | "success" | "error";

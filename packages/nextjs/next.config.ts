@@ -18,7 +18,7 @@ const nextConfig: NextConfig = {
     config.plugins.push(
       new webpack.IgnorePlugin({
         resourceRegExp: /^(@gemini-wallet\/core|porto|porto\/internal)$/,
-      })
+      }),
     );
 
     return config;

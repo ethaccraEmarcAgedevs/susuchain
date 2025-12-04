@@ -1,8 +1,8 @@
 "use client";
 
-import { createConnector } from "wagmi";
-import { privateKeyToAccount, generatePrivateKey } from "viem/accounts";
 import type { Address } from "viem";
+import { generatePrivateKey, privateKeyToAccount } from "viem/accounts";
+import { createConnector } from "wagmi";
 
 // Storage key for burner wallet private key
 const BURNER_STORAGE_KEY = "susuchain.burner.pk";
@@ -16,7 +16,7 @@ const BURNER_STORAGE_KEY = "susuchain.burner.pk";
  * - Keys are lost when localStorage is cleared
  */
 export function burnerWalletConnector() {
-  return createConnector((config) => {
+  return createConnector(config => {
     let currentAccount: ReturnType<typeof privateKeyToAccount> | null = null;
 
     return {

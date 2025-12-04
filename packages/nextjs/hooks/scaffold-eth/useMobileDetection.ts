@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export type DeviceType = "mobile" | "tablet" | "desktop";
 export type Platform = "ios" | "android" | "other";
@@ -50,12 +50,9 @@ export function useMobileDetection(): MobileDetectionResult {
 
       // Enhanced mobile detection
       const isMobileDevice =
-        isMobileByScreen ||
-        /Mobile|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
+        isMobileByScreen || /Mobile|Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(userAgent);
 
-      const isTabletDevice =
-        (isTabletByScreen && !isMobileByScreen) ||
-        /iPad|Android(?!.*Mobile)/i.test(userAgent);
+      const isTabletDevice = (isTabletByScreen && !isMobileByScreen) || /iPad|Android(?!.*Mobile)/i.test(userAgent);
 
       const isDesktopDevice = !isMobileDevice && !isTabletDevice;
 

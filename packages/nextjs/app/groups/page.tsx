@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import * as wagmi from "wagmi";
 import { useAccount } from "wagmi";
 import SusuGroupCard from "~~/components/SusuGroup/SusuGroupCard";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
@@ -86,22 +85,30 @@ const GroupsPage = () => {
           try {
             // Use wagmi's readContract to fetch group details from factory
             const { readContract } = await import("wagmi/actions");
+            const { config } = await import("~~/services/web3/wagmiConfig");
             const { default: deployedContracts } = await import("~~/contracts/deployedContracts");
-            const { targetNetworks } = await import("~~/scaffold.config");
-            const chainId = targetNetworks[0].id;
+            const { default: scaffoldConfig } = await import("~~/scaffold.config");
+            const chainId = scaffoldConfig.targetNetworks[0].id;
 
-            const groupDetails = await readContract(wagmi.config, {
+            const groupDetails = await readContract(config, {
               address: deployedContracts[chainId].SusuFactory.address,
               abi: deployedContracts[chainId].SusuFactory.abi,
               functionName: "getGroupDetails",
               args: [address as `0x${string}`],
             });
 
-            const [groupName, ensName, creator, contributionAmount, maxMembers, createdAt, isActive] =
-              groupDetails as [string, string, string, bigint, bigint, bigint, boolean];
+            const [groupName, ensName, creator, contributionAmount, maxMembers, , isActive] = groupDetails as [
+              string,
+              string,
+              string,
+              bigint,
+              bigint,
+              bigint,
+              boolean,
+            ];
 
             // Fetch live member count from group contract
-            const groupInfo = await readContract(wagmi.config, {
+            const groupInfo = await readContract(config, {
               address: address as `0x${string}`,
               abi: SUSU_GROUP_ABI,
               functionName: "getGroupInfo",
@@ -147,7 +154,8 @@ const GroupsPage = () => {
       for (let i = 0; i < addresses.length; i++) {
         try {
           const { readContract } = await import("wagmi/actions");
-          const groupInfo = await readContract(wagmi.config, {
+          const { config } = await import("~~/services/web3/wagmiConfig");
+          const groupInfo = await readContract(config, {
             address: addresses[i] as `0x${string}`,
             abi: SUSU_GROUP_ABI,
             functionName: "getGroupInfo",

@@ -1,16 +1,14 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { useAppKitNetwork, useAppKitAccount } from "@reown/appkit/react";
-import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { base } from "viem/chains";
+import { useRef, useState } from "react";
 import { ChainBadge } from "./ChainBadge";
+import { useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
+import { base } from "viem/chains";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 
 // SusuChain operates exclusively on Base Mainnet
-const supportedChains = [
-  { chain: base, logo: "🔵" },
-];
+const supportedChains = [{ chain: base, logo: "🔵" }];
 
 export const ChainSwitcher = () => {
   const { caipNetwork } = useAppKitNetwork();

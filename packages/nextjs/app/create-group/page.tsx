@@ -3,13 +3,13 @@
 import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { parseEther, Hash } from "viem";
+import { Hash, parseEther } from "viem";
 import { useAccount } from "wagmi";
-import { useRequireAuth } from "~~/hooks/scaffold-eth/useRequireAuth";
 import EFPProfile from "~~/components/EFPIntegration/EFPProfile";
 import ENSRegistration from "~~/components/ENSIntegration/ENSRegistration";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
+import { useRequireAuth } from "~~/hooks/scaffold-eth/useRequireAuth";
 import { useTransactionStatus } from "~~/hooks/scaffold-eth/useTransactionStatus";
 
 interface FormData {
@@ -45,7 +45,7 @@ const CreateGroupPage = () => {
 
   useTransactionStatus({
     hash: txHash,
-    onSuccess: (receipt) => {
+    onSuccess: receipt => {
       // Track group creation event
       trackGroupCreation(
         receipt.transactionHash,
@@ -56,7 +56,7 @@ const CreateGroupPage = () => {
       // Redirect to groups page
       router.push("/groups");
     },
-    onError: (error) => {
+    onError: error => {
       setError(error.message || "Transaction failed");
       setIsCreating(false);
     },

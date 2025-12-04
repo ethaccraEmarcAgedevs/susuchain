@@ -40,7 +40,8 @@ export interface TransactionMetrics {
  */
 export async function sendToWalletConnectCloud(event: WalletConnectEvent): Promise<void> {
   // Only send in production or if explicitly enabled
-  const isEnabled = process.env.NEXT_PUBLIC_ENABLE_WALLETCONNECT_ANALYTICS === "true" || process.env.NODE_ENV === "production";
+  const isEnabled =
+    process.env.NEXT_PUBLIC_ENABLE_WALLETCONNECT_ANALYTICS === "true" || process.env.NODE_ENV === "production";
 
   if (!isEnabled) {
     if (process.env.NODE_ENV === "development") {
@@ -99,7 +100,12 @@ export function trackConnectionAttempt(metrics: ConnectionMetrics): void {
       success: metrics.success,
       retry_count: metrics.retryCount,
       error_message: metrics.errorMessage,
-      platform: typeof window !== "undefined" ? (window.navigator.userAgent.includes("Mobile") ? "mobile" : "desktop") : "unknown",
+      platform:
+        typeof window !== "undefined"
+          ? window.navigator.userAgent.includes("Mobile")
+            ? "mobile"
+            : "desktop"
+          : "unknown",
     },
     timestamp: Date.now(),
   });

@@ -1,6 +1,6 @@
 "use client";
 
-import { getWalletMetadata, getWalletColorWithOpacity } from "~~/utils/wallet-metadata";
+import { getWalletColorWithOpacity, getWalletMetadata } from "~~/utils/wallet-metadata";
 
 interface WalletIconProps {
   walletName: string;
