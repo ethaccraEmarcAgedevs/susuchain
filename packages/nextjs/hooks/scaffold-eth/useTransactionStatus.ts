@@ -22,7 +22,7 @@ export function useTransactionStatus({
   pendingMessage = "Transaction pending...",
 }: TransactionStatusOptions) {
   const { targetNetwork } = useTargetNetwork();
-  const toastIdRef = useRef<string>();
+  const toastIdRef = useRef<string | undefined>(undefined);
   const hasShownSuccess = useRef(false);
 
   const { data: receipt, isLoading, isSuccess, isError, error } = useWaitForTransactionReceipt({
