@@ -38,7 +38,7 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 - ✅ ENS member profiles (`member.groupname.susu.eth`)
 - ✅ EFP profile verification and reputation tracking
 - ✅ Built with Scaffold-ETH 2 framework
-- ✅ Deployed on Base Sepolia testnet
+- ✅ Deployed on Base Mainnet
 - ✅ Open source on GitHub
 
 ### User Experience
@@ -64,15 +64,16 @@ SusuChain integrates with multiple ETH Accra hackathon bounties:
 - **EFP Integration**: Member verification and reputation
 
 ### Blockchain
-- **Base Sepolia**: L2 testnet for low-cost transactions
+- **Base Mainnet**: L2 for low-cost, secure transactions
 - **Solidity ^0.8.20**: Smart contract development
 - **OpenZeppelin**: Security and standards
 
 ## 📦 Deployed Contracts
 
-### Base Sepolia Testnet
-- **SusuToken**: `0xf33ad6405169ca16C32C0C2E1508B9742888B2Ed`
-- **SusuFactory**: `0x8cBDa19492Aa069AAf4FA4d1534851BcB7276EA2`
+### Base Mainnet
+- **Network**: Base (Chain ID: 8453)
+- **SusuToken**: `0x35519d54af6F5537AB1D4FD6F4F79B3Ed86De065`
+- **SusuFactory**: `0xf55B73a292C0f6CED5C919AF070673FBA94a73eF`
 
 ## 🔌 Wallet Connectivity
 
@@ -80,7 +81,7 @@ SusuChain uses **Reown AppKit** (formerly WalletConnect Web3Modal) for wallet co
 
 - ✅ **Multi-wallet support**: MetaMask, Coinbase Wallet, Trust Wallet, Rainbow, and more
 - ✅ **Mobile-optimized**: Deep links for mobile wallet apps
-- ✅ **Network validation**: Automatic Base Sepolia detection and switching
+- ✅ **Network validation**: Automatic Base Mainnet detection and switching
 - ✅ **Error handling**: User-friendly error messages and retry mechanisms
 - ✅ **Session persistence**: Stay connected across page refreshes
 - ✅ **Analytics tracking**: Built-in analytics for connection metrics
