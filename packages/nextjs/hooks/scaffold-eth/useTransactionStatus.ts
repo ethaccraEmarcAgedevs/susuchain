@@ -33,18 +33,9 @@ export function useTransactionStatus({
     if (!hash) return;
 
     if (isLoading && !toastIdRef.current) {
+      const explorerUrl = `${targetNetwork.blockExplorers?.default.url}/tx/${hash}`;
       toastIdRef.current = toast.loading(
-        <div className="flex flex-col gap-1">
-          <p className="font-semibold">{pendingMessage}</p>
-          <a
-            href={`${targetNetwork.blockExplorers?.default.url}/tx/${hash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-blue-600 hover:underline"
-          >
-            View on explorer →
-          </a>
-        </div>,
+        `${pendingMessage} - View on explorer: ${explorerUrl}`,
         { duration: Infinity },
       );
     }
@@ -53,18 +44,9 @@ export function useTransactionStatus({
       if (toastIdRef.current) {
         toast.dismiss(toastIdRef.current);
       }
+      const explorerUrl = `${targetNetwork.blockExplorers?.default.url}/tx/${hash}`;
       toast.success(
-        <div className="flex flex-col gap-1">
-          <p className="font-semibold">{successMessage}</p>
-          <a
-            href={`${targetNetwork.blockExplorers?.default.url}/tx/${hash}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-green-600 hover:underline"
-          >
-            View transaction →
-          </a>
-        </div>,
+        `${successMessage} - View: ${explorerUrl}`,
         { duration: 5000 },
       );
       hasShownSuccess.current = true;
@@ -78,10 +60,7 @@ export function useTransactionStatus({
         toast.dismiss(toastIdRef.current);
       }
       toast.error(
-        <div className="flex flex-col gap-1">
-          <p className="font-semibold">Transaction failed</p>
-          <p className="text-xs">{error?.message || "Unknown error"}</p>
-        </div>,
+        `Transaction failed: ${error?.message || "Unknown error"}`,
         { duration: 5000 },
       );
       if (onError && error) {
