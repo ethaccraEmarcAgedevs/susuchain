@@ -19,7 +19,6 @@ type SessionData = {
 };
 
 async function getSession(req: NextRequest, res: NextResponse): Promise<IronSession<SessionData>> {
-  // @ts-expect-error next types
   return getIronSession<SessionData>(req, res, sessionOptions);
 }
 
