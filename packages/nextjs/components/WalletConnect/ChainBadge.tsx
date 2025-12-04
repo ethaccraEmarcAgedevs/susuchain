@@ -1,6 +1,5 @@
 "use client";
 
-import { Chain } from "viem";
 import { base } from "viem/chains";
 
 interface ChainBadgeProps {

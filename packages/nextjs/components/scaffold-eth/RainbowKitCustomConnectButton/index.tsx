@@ -32,7 +32,6 @@ export const RainbowKitCustomConnectButton = () => {
   const { trackWalletModalOpen, trackWalletModalClose, trackWalletConnectionError } = useAppKitAnalytics();
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const [isConnecting, setIsConnecting] = useState(false);
-  const [connectionStartTime, setConnectionStartTime] = useState<number>(0);
 
   const blockExplorerAddressLink = address ? getBlockExplorerAddressLink(targetNetwork, address) : undefined;
 
@@ -44,7 +43,6 @@ export const RainbowKitCustomConnectButton = () => {
     if (isConnecting) return;
 
     setIsConnecting(true);
-    setConnectionStartTime(Date.now());
 
     // Track modal open
     trackWalletModalOpen();
