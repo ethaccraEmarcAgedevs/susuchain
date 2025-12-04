@@ -1,7 +1,12 @@
 import { createSIWEConfig, formatMessage } from "@reown/appkit-siwe";
 
 export const siweConfig = createSIWEConfig({
-  createMessage: ({ nonce }) => formatMessage({ nonce }, typeof window !== "undefined" ? window.location.origin : ""),
+  createMessage: ({ nonce }) => formatMessage({
+    domain: typeof window !== "undefined" ? window.location.host : "",
+    uri: typeof window !== "undefined" ? window.location.origin : "",
+    nonce,
+    statement: "Sign in with Ethereum to SusuChain",
+  }, typeof window !== "undefined" ? window.location.origin : ""),
   getNonce: async () => fetch("/api/siwe/nonce").then(r => r.text()),
   verifyMessage: async ({ message, signature }) => {
     const res = await fetch("/api/siwe/verify", {
