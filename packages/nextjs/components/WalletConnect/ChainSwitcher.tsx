@@ -3,16 +3,13 @@
 import { useState, useRef, useEffect } from "react";
 import { useAppKitNetwork, useAppKitAccount } from "@reown/appkit/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
-import { base, baseSepolia, optimism, optimismSepolia, mainnet } from "viem/chains";
+import { base } from "viem/chains";
 import { ChainBadge, getChainInfo } from "./ChainBadge";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 
+// SusuChain operates exclusively on Base Mainnet
 const supportedChains = [
   { chain: base, logo: "🔵" },
-  { chain: baseSepolia, logo: "🔵" },
-  { chain: optimism, logo: "🔴" },
-  { chain: optimismSepolia, logo: "🔴" },
-  { chain: mainnet, logo: "⟠" },
 ];
 
 export const ChainSwitcher = () => {
@@ -98,7 +95,7 @@ export const ChainSwitcher = () => {
 
           <div className="px-4 py-2 border-t border-gray-100 mt-2">
             <p className="text-xs text-gray-500">
-              Switch between supported networks. Testnet chains are for testing only.
+              SusuChain operates exclusively on Base Mainnet for security and reliability.
             </p>
           </div>
         </div>
