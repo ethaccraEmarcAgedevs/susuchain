@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { useAccount, useReadContract } from "wagmi";
+import * as wagmi from "wagmi";
+import { useAccount } from "wagmi";
 import SusuGroupCard from "~~/components/SusuGroup/SusuGroupCard";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
@@ -52,153 +53,122 @@ interface GroupData {
 const GroupsPage = () => {
   const { address: userAddress, isConnected } = useAccount();
   const [selectedFilter, setSelectedFilter] = useState<"all" | "my-groups" | "joinable">("all");
+  const [groups, setGroups] = useState<GroupData[]>([]);
+  const [isLoadingGroups, setIsLoadingGroups] = useState(false);
 
-  // Get total number of groups (use totalGroupsCreated instead)
+  // Get total number of groups
   const { data: totalGroups } = useScaffoldReadContract({
     contractName: "SusuFactory",
     functionName: "totalGroupsCreated",
   });
 
-  // Get all groups addresses
+  // Get all group addresses
   const { data: allGroupAddresses, isLoading: isLoadingAddresses } = useScaffoldReadContract({
     contractName: "SusuFactory",
     functionName: "getAllGroups",
   });
 
-  // Get group details for each address
-  const firstGroupAddress = allGroupAddresses && (allGroupAddresses as string[])[0];
-  const secondGroupAddress = allGroupAddresses && (allGroupAddresses as string[])[1];
-
-  const { data: firstGroupDetails } = useScaffoldReadContract({
-    contractName: "SusuFactory",
-    functionName: "getGroupDetails",
-    args: [firstGroupAddress as `0x${string}`],
-  });
-
-  const { data: secondGroupDetails } = useScaffoldReadContract({
-    contractName: "SusuFactory",
-    functionName: "getGroupDetails",
-    args: [secondGroupAddress as `0x${string}`],
-  });
-
-  // Get live group info for first group (includes current member count)
-  const { data: firstGroupInfo, refetch: refetchFirstInfo } = useReadContract({
-    address: firstGroupAddress as `0x${string}`,
-    abi: SUSU_GROUP_ABI,
-    functionName: "getGroupInfo",
-    query: {
-      enabled: !!firstGroupAddress,
-      refetchInterval: 5000, // Auto-refetch every 5 seconds
-    },
-  });
-
-  // Get live group info for second group (includes current member count)
-  const { data: secondGroupInfo, refetch: refetchSecondInfo } = useReadContract({
-    address: secondGroupAddress as `0x${string}`,
-    abi: SUSU_GROUP_ABI,
-    functionName: "getGroupInfo",
-    query: {
-      enabled: !!secondGroupAddress,
-      refetchInterval: 5000, // Auto-refetch every 5 seconds
-    },
-  });
-
-  // Extract member counts from group info (type-safe way)
-  const firstGroupMemberCount = firstGroupInfo ? firstGroupInfo[5] : null; // currentMems is at index 5
-  const secondGroupMemberCount = secondGroupInfo ? secondGroupInfo[5] : null;
-
-  // Build groups array from fetched data
-  const groups: GroupData[] = [];
-
-  if (firstGroupAddress && firstGroupDetails) {
-    const [groupName, ensName, creator, contributionAmount, maxMembers, createdAt, isActive] = firstGroupDetails as [
-      string,
-      string,
-      string,
-      bigint,
-      bigint,
-      bigint,
-      boolean,
-    ];
-
-    // Log group creation time for analytics
-    console.log(`Group "${groupName}" created at:`, new Date(Number(createdAt) * 1000).toISOString());
-
-    groups.push({
-      groupAddress: firstGroupAddress,
-      groupName,
-      ensName,
-      contributionAmount,
-      contributionInterval: BigInt("604800"), // Default weekly
-      maxMembers,
-      currentMembers: firstGroupMemberCount ? BigInt(firstGroupMemberCount.toString()) : BigInt("1"), // Use live member count
-      isActive,
-      creator,
-    });
-  }
-
-  if (secondGroupAddress && secondGroupDetails) {
-    const [groupName, ensName, creator, contributionAmount, maxMembers, createdAt, isActive] = secondGroupDetails as [
-      string,
-      string,
-      string,
-      bigint,
-      bigint,
-      bigint,
-      boolean,
-    ];
-
-    // Log second group creation time for analytics
-    console.log(`Group "${groupName}" created at:`, new Date(Number(createdAt) * 1000).toISOString());
-
-    groups.push({
-      groupAddress: secondGroupAddress,
-      groupName,
-      ensName,
-      contributionAmount,
-      contributionInterval: BigInt("604800"), // Default weekly
-      maxMembers,
-      currentMembers: secondGroupMemberCount ? BigInt(secondGroupMemberCount.toString()) : BigInt("1"), // Use live member count
-      isActive,
-      creator,
-    });
-  }
-
-  // Debug logging
+  // Fetch all group details dynamically
   useEffect(() => {
-    console.log("Debug Groups Page:");
-    console.log("- allGroupAddresses:", allGroupAddresses);
-    console.log("- firstGroupAddress:", firstGroupAddress);
-    console.log("- firstGroupDetails:", firstGroupDetails);
-    console.log("- firstGroupInfo:", firstGroupInfo);
-    console.log("- firstGroupMemberCount:", firstGroupMemberCount);
-    console.log("- secondGroupInfo:", secondGroupInfo);
-    console.log("- secondGroupMemberCount:", secondGroupMemberCount);
-    console.log("- groups:", groups);
-    console.log("- userAddress:", userAddress);
-  }, [
-    allGroupAddresses,
-    firstGroupAddress,
-    firstGroupDetails,
-    firstGroupInfo,
-    firstGroupMemberCount,
-    secondGroupInfo,
-    secondGroupMemberCount,
-    groups,
-    userAddress,
-  ]);
+    const fetchAllGroups = async () => {
+      if (!allGroupAddresses || (allGroupAddresses as string[]).length === 0) {
+        setGroups([]);
+        return;
+      }
 
-  // Auto-refresh group info every 10 seconds to keep data fresh
+      setIsLoadingGroups(true);
+      const addresses = allGroupAddresses as string[];
+      const groupsData: GroupData[] = [];
+
+      try {
+        // Fetch details for all groups
+        for (const address of addresses) {
+          try {
+            // Use wagmi's readContract to fetch group details from factory
+            const { readContract } = await import("wagmi/actions");
+            const { default: deployedContracts } = await import("~~/contracts/deployedContracts");
+            const { targetNetworks } = await import("~~/scaffold.config");
+            const chainId = targetNetworks[0].id;
+
+            const groupDetails = await readContract(wagmi.config, {
+              address: deployedContracts[chainId].SusuFactory.address,
+              abi: deployedContracts[chainId].SusuFactory.abi,
+              functionName: "getGroupDetails",
+              args: [address as `0x${string}`],
+            });
+
+            const [groupName, ensName, creator, contributionAmount, maxMembers, createdAt, isActive] =
+              groupDetails as [string, string, string, bigint, bigint, bigint, boolean];
+
+            // Fetch live member count from group contract
+            const groupInfo = await readContract(wagmi.config, {
+              address: address as `0x${string}`,
+              abi: SUSU_GROUP_ABI,
+              functionName: "getGroupInfo",
+            });
+
+            const currentMembers = groupInfo ? groupInfo[5] : BigInt(1);
+
+            groupsData.push({
+              groupAddress: address,
+              groupName,
+              ensName,
+              contributionAmount,
+              contributionInterval: BigInt("604800"), // Default weekly
+              maxMembers,
+              currentMembers: BigInt(currentMembers.toString()),
+              isActive,
+              creator,
+            });
+          } catch (error) {
+            console.error(`Error fetching group at ${address}:`, error);
+          }
+        }
+
+        setGroups(groupsData);
+      } catch (error) {
+        console.error("Error fetching all groups:", error);
+      } finally {
+        setIsLoadingGroups(false);
+      }
+    };
+
+    fetchAllGroups();
+  }, [allGroupAddresses]);
+
+  // Auto-refresh all groups every 10 seconds
   useEffect(() => {
+    if (!allGroupAddresses || (allGroupAddresses as string[]).length === 0) return;
+
     const interval = setInterval(async () => {
-      if (firstGroupAddress) await refetchFirstInfo();
-      if (secondGroupAddress) await refetchSecondInfo();
-    }, 10000); // Refresh every 10 seconds
+      const addresses = allGroupAddresses as string[];
+      const updatedGroups = [...groups];
+
+      for (let i = 0; i < addresses.length; i++) {
+        try {
+          const { readContract } = await import("wagmi/actions");
+          const groupInfo = await readContract(wagmi.config, {
+            address: addresses[i] as `0x${string}`,
+            abi: SUSU_GROUP_ABI,
+            functionName: "getGroupInfo",
+          });
+
+          if (groupInfo && updatedGroups[i]) {
+            updatedGroups[i].currentMembers = BigInt(groupInfo[5].toString());
+            updatedGroups[i].isActive = groupInfo[7] as boolean;
+          }
+        } catch (error) {
+          console.error(`Error refreshing group ${i}:`, error);
+        }
+      }
+
+      setGroups(updatedGroups);
+    }, 10000);
 
     return () => clearInterval(interval);
-  }, [firstGroupAddress, secondGroupAddress, refetchFirstInfo, refetchSecondInfo]);
+  }, [allGroupAddresses, groups]);
 
-  const isLoading = isLoadingAddresses;
+  const isLoading = isLoadingAddresses || isLoadingGroups;
 
   const filteredGroups = groups.filter(group => {
     if (selectedFilter === "my-groups") {
@@ -343,17 +313,6 @@ const GroupsPage = () => {
           >
             Joinable ({groups.filter(g => g.currentMembers < g.maxMembers && !g.isActive).length})
           </button>
-        </div>
-
-        {/* Debug Info - Remove this in production */}
-        <div className="mb-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-          <h3 className="font-medium text-yellow-800 mb-2">Debug Info:</h3>
-          <p className="text-sm text-yellow-700">
-            Total Group Addresses: {allGroupAddresses ? (allGroupAddresses as string[]).length : 0}
-          </p>
-          <p className="text-sm text-yellow-700">First Group Address: {firstGroupAddress || "None"}</p>
-          <p className="text-sm text-yellow-700">Groups Array Length: {groups.length}</p>
-          <p className="text-sm text-yellow-700">Your Address: {userAddress || "Not connected"}</p>
         </div>
 
         {/* Groups Grid */}
