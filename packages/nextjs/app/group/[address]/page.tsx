@@ -236,7 +236,10 @@ const GroupDetailsPage = () => {
   };
 
   const isCreator = userAddress && creator.toLowerCase() === userAddress.toLowerCase();
-  const isMember = false; // This would need to be fetched from the contract
+  const isMember =
+    userAddress &&
+    memberAddresses &&
+    (memberAddresses as string[]).some(addr => addr.toLowerCase() === userAddress.toLowerCase());
   const canJoin = isConnected && !isMember && Number(currentMems) < Number(maxMems) && active;
 
   const handleJoinGroup = async () => {
