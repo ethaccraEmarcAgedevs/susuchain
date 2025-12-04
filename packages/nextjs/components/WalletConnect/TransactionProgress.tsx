@@ -52,9 +52,7 @@ export const TransactionProgress = ({ steps, txHash, explorerUrl }: TransactionP
                 {step.description && <p className="text-xs text-gray-600 mt-1">{step.description}</p>}
               </div>
             </div>
-            {index < steps.length - 1 && (
-              <div className="ml-4 w-0.5 h-6 bg-gray-200" />
-            )}
+            {index < steps.length - 1 && <div className="ml-4 w-0.5 h-6 bg-gray-200" />}
           </Fragment>
         ))}
       </div>

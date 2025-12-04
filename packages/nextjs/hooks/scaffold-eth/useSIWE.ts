@@ -1,7 +1,8 @@
 "use client";
-import { useEffect, useState, useCallback } from "react";
-import { siweConfig } from "~~/services/web3/siweConfig";
+
+import { useCallback, useEffect, useState } from "react";
 import { useAccount } from "wagmi";
+import { siweConfig } from "~~/services/web3/siweConfig";
 
 export type SiweSession = { address?: string; chainId?: number; authenticated: boolean };
 

@@ -97,8 +97,15 @@ const GroupsPage = () => {
               args: [address as `0x${string}`],
             });
 
-            const [groupName, ensName, creator, contributionAmount, maxMembers, createdAt, isActive] =
-              groupDetails as [string, string, string, bigint, bigint, bigint, boolean];
+            const [groupName, ensName, creator, contributionAmount, maxMembers, , isActive] = groupDetails as [
+              string,
+              string,
+              string,
+              bigint,
+              bigint,
+              bigint,
+              boolean,
+            ];
 
             // Fetch live member count from group contract
             const groupInfo = await readContract(wagmi.config, {

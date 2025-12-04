@@ -87,11 +87,7 @@ export const SUPPORTED_WALLETS: Record<string, WalletInfo> = {
 /**
  * Generate WalletConnect deep link for a specific wallet
  */
-export function generateWalletDeepLink(
-  walletId: string,
-  wcUri: string,
-  bridge?: string,
-): string {
+export function generateWalletDeepLink(walletId: string, wcUri: string, bridge?: string): string {
   const wallet = SUPPORTED_WALLETS[walletId];
   if (!wallet) {
     throw new Error(`Unsupported wallet: ${walletId}`);
@@ -182,10 +178,5 @@ export function openWalletDeepLink(walletId: string, deepLink: string, platform:
  * Get popular wallets in recommended order
  */
 export function getPopularWallets(): WalletInfo[] {
-  return [
-    SUPPORTED_WALLETS.metamask,
-    SUPPORTED_WALLETS.coinbase,
-    SUPPORTED_WALLETS.trust,
-    SUPPORTED_WALLETS.rainbow,
-  ];
+  return [SUPPORTED_WALLETS.metamask, SUPPORTED_WALLETS.coinbase, SUPPORTED_WALLETS.trust, SUPPORTED_WALLETS.rainbow];
 }

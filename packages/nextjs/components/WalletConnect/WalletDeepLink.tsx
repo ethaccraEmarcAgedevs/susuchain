@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
-import { WalletInfo, openWalletDeepLink, generateWalletDeepLink } from "~~/utils/wallet-deeplinks";
 import { useMobileDetection } from "~~/hooks/scaffold-eth/useMobileDetection";
+import { WalletInfo, generateWalletDeepLink, openWalletDeepLink } from "~~/utils/wallet-deeplinks";
 
 interface WalletDeepLinkProps {
   wallet: WalletInfo;
@@ -63,14 +63,10 @@ export const WalletDeepLink = ({ wallet, wcUri, onConnect, variant = "default" }
       </div>
       <div className="flex-1 text-left">
         <p className="font-semibold text-gray-900">{wallet.name}</p>
-        <p className="text-xs text-gray-500">
-          {isOpening ? "Opening app..." : "Tap to open"}
-        </p>
+        <p className="text-xs text-gray-500">{isOpening ? "Opening app..." : "Tap to open"}</p>
       </div>
       {!isOpening && <ArrowTopRightOnSquareIcon className="h-6 w-6 text-gray-400" />}
-      {isOpening && (
-        <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />
-      )}
+      {isOpening && <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin" />}
     </button>
   );
 };

@@ -35,9 +35,7 @@ export const ChainBadge = ({ chainId, showWarning = true, size = "sm" }: ChainBa
       <span className="w-2 h-2 rounded-full bg-white/30" />
       {chain.name}
       {showWarning && chain.isTestnet && (
-        <span className="ml-1 px-1.5 py-0.5 bg-yellow-500 text-yellow-900 rounded text-[10px] font-bold">
-          TEST
-        </span>
+        <span className="ml-1 px-1.5 py-0.5 bg-yellow-500 text-yellow-900 rounded text-[10px] font-bold">TEST</span>
       )}
     </span>
   );

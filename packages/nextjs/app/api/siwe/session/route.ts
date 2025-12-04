@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getIronSession, IronSession, SessionOptions } from "iron-session";
+import { IronSession, SessionOptions, getIronSession } from "iron-session";
 
 const sessionOptions: SessionOptions = {
   password: process.env.SESSION_SECRET || "development_secret_change_me_please_32_chars_min",

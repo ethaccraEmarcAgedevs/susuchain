@@ -104,11 +104,7 @@ export function parseAppKitError(error: any): ParsedError {
   }
 
   // QR_CODE_EXPIRED - Mobile connection expiry
-  if (
-    errorMessage.includes("qr") ||
-    errorMessage.includes("qrcode") ||
-    errorMessage.includes("qr code")
-  ) {
+  if (errorMessage.includes("qr") || errorMessage.includes("qrcode") || errorMessage.includes("qr code")) {
     return {
       type: AppKitErrorType.QR_CODE_EXPIRED,
       message: error.message || "QR code expired",

@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import { Address, formatEther } from "viem";
-import { useAccount, useBalance, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
 import toast from "react-hot-toast";
+import { Address, formatEther } from "viem";
+import { useAccount, useBalance, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 
 const SUSU_GROUP_ABI = [
@@ -104,7 +104,7 @@ export const ContributionForm = ({
       const toastId = toast.loading("Submitting contribution...");
 
       // Call the smart contract
-      const txHash = await writeContractAsync({
+      await writeContractAsync({
         address: groupAddress,
         abi: SUSU_GROUP_ABI,
         functionName: "contributeToRound",

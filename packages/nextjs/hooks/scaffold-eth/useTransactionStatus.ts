@@ -1,10 +1,10 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useTargetNetwork } from "./useTargetNetwork";
+import toast from "react-hot-toast";
 import { Hash } from "viem";
 import { useWaitForTransactionReceipt } from "wagmi";
-import toast from "react-hot-toast";
-import { useTargetNetwork } from "./useTargetNetwork";
 
 interface TransactionStatusOptions {
   hash?: Hash;
@@ -25,7 +25,13 @@ export function useTransactionStatus({
   const toastIdRef = useRef<string | undefined>(undefined);
   const hasShownSuccess = useRef(false);
 
-  const { data: receipt, isLoading, isSuccess, isError, error } = useWaitForTransactionReceipt({
+  const {
+    data: receipt,
+    isLoading,
+    isSuccess,
+    isError,
+    error,
+  } = useWaitForTransactionReceipt({
     hash,
   });
 
@@ -34,10 +40,9 @@ export function useTransactionStatus({
 
     if (isLoading && !toastIdRef.current) {
       const explorerUrl = `${targetNetwork.blockExplorers?.default.url}/tx/${hash}`;
-      toastIdRef.current = toast.loading(
-        `${pendingMessage} - View on explorer: ${explorerUrl}`,
-        { duration: Infinity },
-      );
+      toastIdRef.current = toast.loading(`${pendingMessage} - View on explorer: ${explorerUrl}`, {
+        duration: Infinity,
+      });
     }
 
     if (isSuccess && !hasShownSuccess.current) {
@@ -45,10 +50,7 @@ export function useTransactionStatus({
         toast.dismiss(toastIdRef.current);
       }
       const explorerUrl = `${targetNetwork.blockExplorers?.default.url}/tx/${hash}`;
-      toast.success(
-        `${successMessage} - View: ${explorerUrl}`,
-        { duration: 5000 },
-      );
+      toast.success(`${successMessage} - View: ${explorerUrl}`, { duration: 5000 });
       hasShownSuccess.current = true;
       if (onSuccess && receipt) {
         onSuccess(receipt);
@@ -59,10 +61,7 @@ export function useTransactionStatus({
       if (toastIdRef.current) {
         toast.dismiss(toastIdRef.current);
       }
-      toast.error(
-        `Transaction failed: ${error?.message || "Unknown error"}`,
-        { duration: 5000 },
-      );
+      toast.error(`Transaction failed: ${error?.message || "Unknown error"}`, { duration: 5000 });
       if (onError && error) {
         onError(error);
       }
@@ -74,7 +73,19 @@ export function useTransactionStatus({
         toastIdRef.current = undefined;
       }
     };
-  }, [hash, isLoading, isSuccess, isError, error, receipt, onSuccess, onError, successMessage, pendingMessage, targetNetwork]);
+  }, [
+    hash,
+    isLoading,
+    isSuccess,
+    isError,
+    error,
+    receipt,
+    onSuccess,
+    onError,
+    successMessage,
+    pendingMessage,
+    targetNetwork,
+  ]);
 
   return {
     receipt,

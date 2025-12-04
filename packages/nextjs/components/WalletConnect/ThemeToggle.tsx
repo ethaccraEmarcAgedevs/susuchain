@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { useAppKitTheme } from "@reown/appkit/react";
 import { MoonIcon, SunIcon } from "@heroicons/react/24/outline";
-import { DARK_THEME, LIGHT_THEME, getInitialTheme, setStoredTheme, type ThemeMode } from "~~/utils/appkit-theme";
+import { DARK_THEME, LIGHT_THEME, type ThemeMode, getInitialTheme, setStoredTheme } from "~~/utils/appkit-theme";
 
 export const ThemeToggle = () => {
   const { setThemeMode, setThemeVariables } = useAppKitTheme();
@@ -38,11 +38,7 @@ export const ThemeToggle = () => {
       aria-label="Toggle theme"
       title={`Switch to ${currentTheme === "light" ? "dark" : "light"} mode`}
     >
-      {currentTheme === "light" ? (
-        <MoonIcon className="h-5 w-5" />
-      ) : (
-        <SunIcon className="h-5 w-5" />
-      )}
+      {currentTheme === "light" ? <MoonIcon className="h-5 w-5" /> : <SunIcon className="h-5 w-5" />}
     </button>
   );
 };

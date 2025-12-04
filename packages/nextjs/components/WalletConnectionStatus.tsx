@@ -1,8 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { useAccount } from "wagmi";
 import toast from "react-hot-toast";
+import { useAccount } from "wagmi";
 
 /**
  * WalletConnectionStatus Component

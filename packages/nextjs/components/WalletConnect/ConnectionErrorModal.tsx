@@ -1,8 +1,8 @@
 "use client";
 
 import { Fragment } from "react";
-import { XMarkIcon, ExclamationTriangleIcon, ArrowPathIcon } from "@heroicons/react/24/outline";
-import { ParsedError, AppKitErrorType } from "~~/utils/appkit-error-parser";
+import { ArrowPathIcon, ExclamationTriangleIcon, XMarkIcon } from "@heroicons/react/24/outline";
+import { AppKitErrorType, ParsedError } from "~~/utils/appkit-error-parser";
 
 interface ConnectionErrorModalProps {
   isOpen: boolean;
@@ -61,7 +61,9 @@ export const ConnectionErrorModal = ({
 
           {/* Icon */}
           <div className="flex items-center justify-center mb-4">
-            <div className={`w-16 h-16 rounded-full bg-opacity-10 flex items-center justify-center ${getErrorIcon()} bg-current`}>
+            <div
+              className={`w-16 h-16 rounded-full bg-opacity-10 flex items-center justify-center ${getErrorIcon()} bg-current`}
+            >
               <ExclamationTriangleIcon className={`h-8 w-8 ${getErrorIcon()}`} />
             </div>
           </div>

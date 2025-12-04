@@ -67,9 +67,7 @@ const Home: NextPage = () => {
             {!isConnected ? (
               <div className="flex flex-col items-center gap-4 mb-6">
                 <p className="text-lg font-semibold text-gray-700">Connect your wallet to get started</p>
-                <div className="text-sm text-gray-500">
-                  Click &quot;Connect Wallet&quot; in the top right corner
-                </div>
+                <div className="text-sm text-gray-500">Click &quot;Connect Wallet&quot; in the top right corner</div>
               </div>
             ) : null}
 
@@ -235,19 +233,6 @@ const GroupCardWrapper = ({ groupAddress }: { groupAddress: Address }) => {
   });
 
   // For the wrapper component, we'll use factory data only
-  // const { data: groupInfo } = useReadContract({
-  //   address: groupAddress,
-  //   abi: [], // Would need proper ABI here
-  //   functionName: "getGroupInfo",
-  // });
-  // groupInfo removed for Stage 3 simplification
-
-  if (!groupDetails) {
-    return <div className="animate-pulse bg-gray-200 h-80 rounded-xl"></div>;
-  }
-
-  const [groupName, ensName, creator, contributionAmount, maxMembers, , isActive] = groupDetails;
-
   // Fetch live group info for accurate member count and status
   const { data: groupInfo } = useReadContract({
     address: groupAddress,
@@ -271,7 +256,16 @@ const GroupCardWrapper = ({ groupAddress }: { groupAddress: Address }) => {
       },
     ],
     functionName: "getGroupInfo",
+    query: {
+      enabled: !!groupAddress && !!groupDetails,
+    },
   });
+
+  if (!groupDetails) {
+    return <div className="animate-pulse bg-gray-200 h-80 rounded-xl"></div>;
+  }
+
+  const [groupName, ensName, creator, contributionAmount, maxMembers, , isActive] = groupDetails;
 
   const currentMembers = groupInfo ? Number(groupInfo[5]) : 1;
   const currentRound = groupInfo ? Number(groupInfo[6]) : 0;

@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useAccount } from "wagmi";
-import { getBurnerPrivateKey, deleteBurnerWallet } from "~~/services/web3/burnerWallet";
+import { deleteBurnerWallet, getBurnerPrivateKey } from "~~/services/web3/burnerWallet";
 
 /**
  * BurnerWalletInfo Component
@@ -69,9 +69,7 @@ export const BurnerWalletInfo = () => {
             </svg>
             <div className="flex-1">
               <h3 className="font-bold text-sm">⚠️ Burner Wallet (Development Only)</h3>
-              <p className="text-xs mt-1">
-                DO NOT send real funds! Private key stored in browser localStorage.
-              </p>
+              <p className="text-xs mt-1">DO NOT send real funds! Private key stored in browser localStorage.</p>
             </div>
           </div>
 
@@ -82,10 +80,7 @@ export const BurnerWalletInfo = () => {
 
           {/* Private Key Section */}
           <div className="flex flex-col gap-2">
-            <button
-              className="btn btn-xs btn-outline"
-              onClick={() => setShowPrivateKey(!showPrivateKey)}
-            >
+            <button className="btn btn-xs btn-outline" onClick={() => setShowPrivateKey(!showPrivateKey)}>
               {showPrivateKey ? "Hide" : "Show"} Private Key
             </button>
 

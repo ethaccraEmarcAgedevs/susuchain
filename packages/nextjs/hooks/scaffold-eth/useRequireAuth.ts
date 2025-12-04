@@ -1,6 +1,7 @@
 "use client";
-import { useRouter } from "next/navigation";
+
 import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { useSIWE } from "./useSIWE";
 
 export function useRequireAuth() {

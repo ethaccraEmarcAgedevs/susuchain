@@ -6,8 +6,8 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { hardhat } from "viem/chains";
 import { Bars3Icon, BugAntIcon } from "@heroicons/react/24/outline";
-import { ThemeToggle } from "~~/components/WalletConnect/ThemeToggle";
 import { ChainSwitcher } from "~~/components/WalletConnect/ChainSwitcher";
+import { ThemeToggle } from "~~/components/WalletConnect/ThemeToggle";
 import { FaucetButton, RainbowKitCustomConnectButton } from "~~/components/scaffold-eth";
 import { useOutsideClick, useTargetNetwork } from "~~/hooks/scaffold-eth";
 

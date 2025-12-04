@@ -8,8 +8,8 @@ import { AddressQRCodeModal } from "./AddressQRCodeModal";
 import { RevealBurnerPKModal } from "./RevealBurnerPKModal";
 import { WrongNetworkDropdown } from "./WrongNetworkDropdown";
 import { useAppKit, useAppKitAccount, useAppKitNetwork } from "@reown/appkit/react";
-import { Address } from "viem";
 import toast from "react-hot-toast";
+import { Address } from "viem";
 import { useNetworkColor } from "~~/hooks/scaffold-eth";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
@@ -82,12 +82,7 @@ export const RainbowKitCustomConnectButton = () => {
 
   if (!isConnected || !address) {
     return (
-      <button
-        className="btn btn-primary btn-sm"
-        onClick={handleConnect}
-        disabled={isConnecting}
-        type="button"
-      >
+      <button className="btn btn-primary btn-sm" onClick={handleConnect} disabled={isConnecting} type="button">
         {isConnecting ? (
           <span className="flex items-center gap-2">
             <span className="loading loading-spinner loading-xs"></span>

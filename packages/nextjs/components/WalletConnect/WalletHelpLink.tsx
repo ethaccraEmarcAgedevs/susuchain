@@ -1,6 +1,6 @@
 "use client";
 
-import { QuestionMarkCircleIcon, ArrowTopRightOnSquareIcon } from "@heroicons/react/24/outline";
+import { ArrowTopRightOnSquareIcon, QuestionMarkCircleIcon } from "@heroicons/react/24/outline";
 import { getWalletMetadata } from "~~/utils/wallet-metadata";
 
 interface WalletHelpLinkProps {
