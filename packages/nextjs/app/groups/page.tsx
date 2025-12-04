@@ -85,12 +85,12 @@ const GroupsPage = () => {
           try {
             // Use wagmi's readContract to fetch group details from factory
             const { readContract } = await import("wagmi/actions");
-            const { config } = await import("~~/services/web3/wagmiConfig");
-            const { default: deployedContracts } = await import("~~/contracts/deployedContracts");
-            const { default: scaffoldConfig } = await import("~~/scaffold.config");
+            const { wagmiConfig } = await import("~~/services/web3/wagmiConfig");
+            const deployedContracts = (await import("~~/contracts/deployedContracts")).default;
+            const scaffoldConfig = (await import("~~/scaffold.config")).default;
             const chainId = scaffoldConfig.targetNetworks[0].id;
 
-            const groupDetails = await readContract(config, {
+            const groupDetails = await readContract(wagmiConfig, {
               address: deployedContracts[chainId].SusuFactory.address,
               abi: deployedContracts[chainId].SusuFactory.abi,
               functionName: "getGroupDetails",
@@ -108,7 +108,7 @@ const GroupsPage = () => {
             ];
 
             // Fetch live member count from group contract
-            const groupInfo = await readContract(config, {
+            const groupInfo = await readContract(wagmiConfig, {
               address: address as `0x${string}`,
               abi: SUSU_GROUP_ABI,
               functionName: "getGroupInfo",
@@ -154,8 +154,8 @@ const GroupsPage = () => {
       for (let i = 0; i < addresses.length; i++) {
         try {
           const { readContract } = await import("wagmi/actions");
-          const { config } = await import("~~/services/web3/wagmiConfig");
-          const groupInfo = await readContract(config, {
+          const { wagmiConfig } = await import("~~/services/web3/wagmiConfig");
+          const groupInfo = await readContract(wagmiConfig, {
             address: addresses[i] as `0x${string}`,
             abi: SUSU_GROUP_ABI,
             functionName: "getGroupInfo",
@@ -373,17 +373,6 @@ const GroupsPage = () => {
                 }}
                 showCreator={true}
                 showJoinButton={group.isActive && group.currentMembers < group.maxMembers}
-                onJoinClick={async groupAddress => {
-                  // Refresh data for the specific group that was joined
-                  setTimeout(async () => {
-                    // Refresh group info (includes member counts)
-                    if (groupAddress === firstGroupAddress) {
-                      await refetchFirstInfo();
-                    } else if (groupAddress === secondGroupAddress) {
-                      await refetchSecondInfo();
-                    }
-                  }, 2000); // Wait 2 seconds for transaction to be processed
-                }}
               />
             ))}
           </div>
