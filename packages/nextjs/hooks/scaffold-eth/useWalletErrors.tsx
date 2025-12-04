@@ -129,3 +129,6 @@ export function useWalletErrors() {
     maxAttempts: MAX_RETRY_ATTEMPTS,
   };
 }
+
+// Re-export getRetryMessage for convenience
+export { getRetryMsg as getRetryMessage };

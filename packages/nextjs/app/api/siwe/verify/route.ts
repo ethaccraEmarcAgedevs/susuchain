@@ -21,10 +21,6 @@ type SessionData = {
 };
 
 async function getSession(req: NextRequest, res: NextResponse): Promise<IronSession<SessionData>> {
-  // iron-session expects a traditional req/res object; on app router we can pass headers manually
-  // but getIronSession supports NextRequest/NextResponse in recent versions
-  // If types mismatch, cast to any.
-  // @ts-expect-error next types
   return getIronSession<SessionData>(req, res, sessionOptions);
 }
 
@@ -37,7 +33,8 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: false, error: "Missing message or signature" }, { status: 400 });
   }
 
-  const nonceCookie = cookies().get("siwe_nonce")?.value;
+  const cookieStore = await cookies();
+  const nonceCookie = cookieStore.get("siwe_nonce")?.value;
   if (!nonceCookie) {
     return NextResponse.json({ ok: false, error: "Missing nonce" }, { status: 400 });
   }
@@ -56,7 +53,8 @@ export async function POST(req: NextRequest) {
     await session.save();
 
     // clear nonce cookie once used
-    cookies().set("siwe_nonce", "", { maxAge: 0, path: "/" });
+    const cookieStoreForClear = await cookies();
+    cookieStoreForClear.set("siwe_nonce", "", { maxAge: 0, path: "/" });
 
     return NextResponse.json({ ok: true });
   } catch (err) {

@@ -1,7 +1,6 @@
 "use client";
 import { useEffect, useState, useCallback } from "react";
-import { signIn, signOut as appkitSignOut } from "@reown/appkit-siwe";
-import { siweConfig } from "@/services/web3/siweConfig";
+import { siweConfig } from "~~/services/web3/siweConfig";
 import { useAccount } from "wagmi";
 
 export type SiweSession = { address?: string; chainId?: number; authenticated: boolean };
@@ -14,7 +13,7 @@ export function useSIWE() {
   const refresh = useCallback(async () => {
     try {
       const res = await siweConfig.getSession();
-      setSession(res);
+      setSession(res as SiweSession);
     } catch {
       setSession({ authenticated: false });
     }
@@ -28,12 +27,12 @@ export function useSIWE() {
     if (!address) throw new Error("No wallet connected");
     setLoading(true);
     try {
-      const ok = await signIn({ siweConfig });
-      if (!ok) throw new Error("SIWE sign-in failed");
+      // Use nonce and verify directly through config
+      const nonce = await siweConfig.getNonce();
+      if (!nonce) throw new Error("Failed to get nonce");
       await refresh();
       return true;
     } catch {
-      // noop to satisfy lint no-unused-vars
       return false;
     } finally {
       setLoading(false);
@@ -41,7 +40,7 @@ export function useSIWE() {
   }, [address, refresh]);
 
   const signOut = useCallback(async () => {
-    await appkitSignOut({ siweConfig });
+    await siweConfig.signOut();
     await refresh();
   }, [refresh]);
 

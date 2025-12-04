@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import { useAppKitNetwork, useAppKitAccount } from "@reown/appkit/react";
 import { ChevronDownIcon } from "@heroicons/react/24/outline";
 import { base } from "viem/chains";
-import { ChainBadge, getChainInfo } from "./ChainBadge";
+import { ChainBadge } from "./ChainBadge";
 import { useOutsideClick } from "~~/hooks/scaffold-eth";
 
 // SusuChain operates exclusively on Base Mainnet
@@ -13,28 +13,27 @@ const supportedChains = [
 ];
 
 export const ChainSwitcher = () => {
-  const { caipNetwork, switchNetwork } = useAppKitNetwork();
+  const { caipNetwork } = useAppKitNetwork();
   const { isConnected } = useAppKitAccount();
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
   useOutsideClick(dropdownRef, () => setIsOpen(false));
 
-  const currentChainId = caipNetwork?.id ? parseInt(caipNetwork.id.split(":")[1]) : base.id;
-  const currentChain = getChainInfo(currentChainId);
+  const currentChainId = caipNetwork?.id
+    ? typeof caipNetwork.id === "string"
+      ? parseInt(caipNetwork.id.split(":")[1])
+      : caipNetwork.id
+    : base.id;
 
-  const handleSwitch = async (chainId: number) => {
+  const handleSwitch = async () => {
     if (!isConnected) {
       setIsOpen(false);
       return;
     }
 
     try {
-      // Find the chain in supported chains
-      const targetChain = supportedChains.find(c => c.chain.id === chainId);
-      if (targetChain) {
-        await switchNetwork(targetChain.chain);
-      }
+      // Since we only have Base network, just close the dropdown
       setIsOpen(false);
     } catch (error) {
       console.error("Failed to switch network:", error);
@@ -63,13 +62,12 @@ export const ChainSwitcher = () => {
 
           <div className="max-h-96 overflow-y-auto">
             {supportedChains.map(({ chain, logo }) => {
-              const chainInfo = getChainInfo(chain.id);
               const isActive = currentChainId === chain.id;
 
               return (
                 <button
                   key={chain.id}
-                  onClick={() => handleSwitch(chain.id)}
+                  onClick={() => handleSwitch()}
                   disabled={isActive}
                   className={`w-full px-4 py-3 flex items-center gap-3 hover:bg-gray-50 transition-colors ${
                     isActive ? "bg-blue-50" : ""
@@ -80,14 +78,7 @@ export const ChainSwitcher = () => {
                     <p className="font-medium text-sm text-gray-900">{chain.name}</p>
                     <p className="text-xs text-gray-500">Chain ID: {chain.id}</p>
                   </div>
-                  {chainInfo.isTestnet && (
-                    <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs font-medium rounded">
-                      Testnet
-                    </span>
-                  )}
-                  {isActive && (
-                    <div className="w-2 h-2 rounded-full bg-green-500" />
-                  )}
+                  {isActive && <div className="w-2 h-2 rounded-full bg-green-500" />}
                 </button>
               );
             })}

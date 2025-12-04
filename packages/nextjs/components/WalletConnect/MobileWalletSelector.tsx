@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useAppKit } from "@reown/appkit/react";
 import { QrCodeIcon, DevicePhoneMobileIcon } from "@heroicons/react/24/outline";
-import { WalletDeepLink, WalletDownloadButton } from "./WalletDeepLink";
+import { WalletDeepLink } from "./WalletDeepLink";
 import { getPopularWallets } from "~~/utils/wallet-deeplinks";
 import { useMobileDetection } from "~~/hooks/scaffold-eth/useMobileDetection";
 
@@ -16,7 +16,7 @@ export const MobileWalletSelector = ({
   onConnect,
   showQRFallback = true,
 }: MobileWalletSelectorProps) => {
-  const { isMobile, isDesktop } = useMobileDetection();
+  const { isDesktop } = useMobileDetection();
   const { open } = useAppKit();
   const [wcUri, setWcUri] = useState<string>("");
   const [showMode, setShowMode] = useState<"wallets" | "qr">("wallets");
