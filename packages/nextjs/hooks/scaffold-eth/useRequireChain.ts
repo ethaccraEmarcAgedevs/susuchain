@@ -23,7 +23,11 @@ export function useRequireChain({
   const { caipNetwork, switchNetwork } = useAppKitNetwork();
   const [hasShownPrompt, setHasShownPrompt] = useState(false);
 
-  const currentChainId = caipNetwork?.id ? parseInt(caipNetwork.id.split(":")[1]) : null;
+  const currentChainId = caipNetwork?.id
+    ? typeof caipNetwork.id === "string"
+      ? parseInt(caipNetwork.id.split(":")[1])
+      : caipNetwork.id
+    : null;
   const isCorrectChain = currentChainId === requiredChainId;
   const requiredChainInfo = getChainInfo(requiredChainId);
 
@@ -41,18 +45,7 @@ export function useRequireChain({
       setHasShownPrompt(true);
 
       toast.error(
-        <div className="flex flex-col gap-2">
-          <p className="font-semibold text-sm">Wrong Network</p>
-          <p className="text-xs">
-            This feature requires {requiredChainInfo.name} network.
-          </p>
-          <button
-            onClick={() => handleSwitchChain()}
-            className="mt-1 px-3 py-1.5 bg-blue-600 text-white rounded text-xs font-medium hover:bg-blue-700 transition-colors"
-          >
-            Switch to {requiredChainInfo.name}
-          </button>
-        </div>,
+        `Wrong Network: This feature requires ${requiredChainInfo.name} network. Please switch networks.`,
         {
           duration: 8000,
           position: "top-center",
