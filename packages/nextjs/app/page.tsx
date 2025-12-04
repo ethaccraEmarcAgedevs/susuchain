@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { NextPage } from "next";
 import { Address } from "viem";
-import { useAccount } from "wagmi";
+import { useAccount, useReadContract } from "wagmi";
 import SusuGroupCard from "~~/components/SusuGroup/SusuGroupCard";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
@@ -246,11 +246,36 @@ const GroupCardWrapper = ({ groupAddress }: { groupAddress: Address }) => {
     return <div className="animate-pulse bg-gray-200 h-80 rounded-xl"></div>;
   }
 
-  const [groupName, ensName, creator, contributionAmount, maxMembers] = groupDetails;
-  // Mock group info for display - Stage 3 uses factory data primarily
-  const currentMembers = 1;
-  const currentRound = 0;
-  const active = true;
+  const [groupName, ensName, creator, contributionAmount, maxMembers, , isActive] = groupDetails;
+
+  // Fetch live group info for accurate member count and status
+  const { data: groupInfo } = useReadContract({
+    address: groupAddress,
+    abi: [
+      {
+        inputs: [],
+        name: "getGroupInfo",
+        outputs: [
+          { internalType: "string", name: "name", type: "string" },
+          { internalType: "string", name: "ensName", type: "string" },
+          { internalType: "uint256", name: "contribution", type: "uint256" },
+          { internalType: "uint256", name: "interval", type: "uint256" },
+          { internalType: "uint256", name: "maxMems", type: "uint256" },
+          { internalType: "uint256", name: "currentMems", type: "uint256" },
+          { internalType: "uint256", name: "round", type: "uint256" },
+          { internalType: "bool", name: "active", type: "bool" },
+          { internalType: "address", name: "currentBeneficiary", type: "address" },
+        ],
+        stateMutability: "view",
+        type: "function",
+      },
+    ],
+    functionName: "getGroupInfo",
+  });
+
+  const currentMembers = groupInfo ? Number(groupInfo[5]) : 1;
+  const currentRound = groupInfo ? Number(groupInfo[6]) : 0;
+  const active = groupInfo ? (groupInfo[7] as boolean) : isActive;
 
   const groupData = {
     groupAddress,
@@ -259,8 +284,8 @@ const GroupCardWrapper = ({ groupAddress }: { groupAddress: Address }) => {
     creator: creator,
     contributionAmount: contributionAmount,
     maxMembers: Number(maxMembers),
-    currentMembers: Number(currentMembers),
-    currentRound: Number(currentRound),
+    currentMembers,
+    currentRound,
     isActive: active,
   };
 
