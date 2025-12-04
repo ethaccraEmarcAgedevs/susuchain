@@ -21,7 +21,7 @@ export function useWalletErrors() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [attemptNumber, setAttemptNumber] = useState(0);
   const [isRetrying, setIsRetrying] = useState(false);
-  const retryTimeoutRef = useRef<NodeJS.Timeout>();
+  const retryTimeoutRef = useRef<NodeJS.Timeout | undefined>(undefined);
 
   const clearRetryTimeout = useCallback(() => {
     if (retryTimeoutRef.current) {
