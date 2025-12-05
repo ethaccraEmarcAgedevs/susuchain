@@ -39,22 +39,21 @@ const SUSU_GROUP_ABI = [
     stateMutability: "view",
     type: "function",
   },
+  {
+    inputs: [{ internalType: "address", name: "_member", type: "address" }],
+    name: "getMemberInfo",
+    outputs: [
+      { internalType: "string", name: "ensName", type: "string" },
+      { internalType: "string", name: "efpProfile", type: "string" },
+      { internalType: "bool", name: "isActive", type: "bool" },
+      { internalType: "uint256", name: "contributionCount", type: "uint256" },
+      { internalType: "uint256", name: "lastContribution", type: "uint256" },
+      { internalType: "bool", name: "hasReceivedPayout", type: "bool" },
+    ],
+    stateMutability: "view",
+    type: "function",
+  },
 ] as const;
-
-// Helper function for reading contract data
-const readContractFromProvider = async (
-  groupAddress: `0x${string}`,
-  memberAddr: string,
-): Promise<[string, string, boolean] | null> => {
-  try {
-    // For now, return mock data since we need wagmi config which is complex to set up here
-    // In production, this would use the proper readContract with wagmi config
-    return [`${memberAddr.slice(0, 6)}...${memberAddr.slice(-4)}`, "", true];
-  } catch (error) {
-    console.error("Error reading contract:", error);
-    return null;
-  }
-};
 
 interface GroupMember {
   memberAddress: string;
@@ -113,26 +112,44 @@ const GroupDetailsPage = () => {
       setIsLoadingMembers(true);
       try {
         const memberDetails: GroupMember[] = [];
+        const { readContract } = await import("wagmi/actions");
+        const { wagmiConfig } = await import("~~/services/web3/wagmiConfig");
 
         for (const memberAddr of memberAddresses) {
           try {
-            // Fetch member info from contract using a simplified direct approach
-            const memberInfo = await readContractFromProvider(groupAddress, memberAddr);
+            // Fetch real member info from contract
+            const memberInfo = await readContract(wagmiConfig, {
+              address: groupAddress,
+              abi: SUSU_GROUP_ABI,
+              functionName: "getMemberInfo",
+              args: [memberAddr as `0x${string}`],
+            });
 
             if (memberInfo) {
-              const [ensName, efpProfile, isActive] = memberInfo;
+              const [ensName, efpProfile, isActive, contributionCount, lastContribution, hasReceivedPayout] =
+                memberInfo;
               memberDetails.push({
                 memberAddress: memberAddr,
                 ensName: ensName || `${memberAddr.slice(0, 6)}...${memberAddr.slice(-4)}`,
                 efpProfile: efpProfile || "",
-                isActive: isActive,
-                contributionCount: BigInt(0), // Would be fetched from contribution tracking
-                lastContribution: BigInt(0), // Would be fetched from contribution tracking
-                hasReceivedPayout: false, // Would be fetched from payout tracking
+                isActive: isActive as boolean,
+                contributionCount: contributionCount ? BigInt(contributionCount.toString()) : BigInt(0),
+                lastContribution: lastContribution ? BigInt(lastContribution.toString()) : BigInt(0),
+                hasReceivedPayout: hasReceivedPayout as boolean,
               });
             }
           } catch (error) {
             console.error(`Error fetching member ${memberAddr}:`, error);
+            // Fall back to basic display if member info fails
+            memberDetails.push({
+              memberAddress: memberAddr,
+              ensName: `${memberAddr.slice(0, 6)}...${memberAddr.slice(-4)}`,
+              efpProfile: "",
+              isActive: true,
+              contributionCount: BigInt(0),
+              lastContribution: BigInt(0),
+              hasReceivedPayout: false,
+            });
           }
         }
 
