@@ -259,10 +259,9 @@ const GroupDetailsPage = () => {
 
       toast.success(`Successfully joined "${groupName}"! 🎉`);
 
-      // Refresh page after joining
-      setTimeout(() => {
-        window.location.reload();
-      }, 2000);
+      // Refetch data to update the UI
+      await refetchMembers();
+      // The member list will update with the new member count automatically
     } catch (error) {
       console.error("Error joining group:", error);
       toast.error("Failed to join group. Please try again.");
