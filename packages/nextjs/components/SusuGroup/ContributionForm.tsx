@@ -68,7 +68,7 @@ export const ContributionForm = ({
 
       try {
         const { readContract } = await import("wagmi/actions");
-        const { default: wagmiConfig } = await import("~~/services/web3/wagmiConfig");
+        const { wagmiConfig } = await import("~~/services/web3/wagmiConfig");
 
         const hasContributed = await readContract(wagmiConfig, {
           address: groupAddress,

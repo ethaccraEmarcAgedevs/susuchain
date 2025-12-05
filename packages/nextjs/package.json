@@ -27,6 +27,7 @@
     "blo": "^1.2.0",
     "burner-connector": "0.0.16",
     "daisyui": "^5.0.9",
+    "ethers": "^6.16.0",
     "iron-session": "^8.0.4",
     "kubo-rpc-client": "^5.0.2",
     "next": "^15.2.3",
