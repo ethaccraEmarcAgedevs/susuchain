@@ -286,7 +286,7 @@ const GroupsPage = () => {
               </div>
               <div className="ml-4">
                 <p className="text-2xl font-bold text-gray-900">
-                  {groups.filter(g => g.currentMembers < g.maxMembers && !g.isActive).length}
+                  {groups.filter(g => g.currentMembers < g.maxMembers && g.isActive).length}
                 </p>
                 <p className="text-gray-600">Joinable Groups</p>
               </div>
@@ -319,7 +319,7 @@ const GroupsPage = () => {
               selectedFilter === "joinable" ? "bg-blue-600 text-white" : "bg-white text-gray-700 hover:bg-gray-50"
             }`}
           >
-            Joinable ({groups.filter(g => g.currentMembers < g.maxMembers && !g.isActive).length})
+            Joinable ({groups.filter(g => g.currentMembers < g.maxMembers && g.isActive).length})
           </button>
         </div>
 

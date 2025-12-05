@@ -149,6 +149,28 @@ export const ContributionForm = ({
     );
   }
 
+  if (currentRound === 0) {
+    return (
+      <div className={`p-6 bg-blue-50 border border-blue-200 rounded-lg ${className}`}>
+        <div className="text-center">
+          <svg className="mx-auto h-12 w-12 text-blue-400 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+            />
+          </svg>
+          <h3 className="text-lg font-medium text-blue-800 mb-2">Waiting for Group to Start</h3>
+          <p className="text-sm text-blue-700">
+            This group hasn&apos;t started yet. Rounds will begin once the group reaches maximum members or the creator
+            starts the first round.
+          </p>
+        </div>
+      </div>
+    );
+  }
+
   if (hasContributedToRound) {
     return (
       <div className={`p-6 bg-green-50 border border-green-200 rounded-lg ${className}`}>
