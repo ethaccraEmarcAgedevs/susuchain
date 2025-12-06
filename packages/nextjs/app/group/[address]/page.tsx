@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { formatEther } from "viem";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import ENSProfile from "~~/components/ENSIntegration/ENSProfile";
+import { VouchingSystem } from "~~/components/SusuGroup/VouchingSystem";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
 // SusuGroup ABI for safe direct calls
@@ -474,6 +475,20 @@ const GroupDetailsPage = () => {
                 )}
               </div>
             </div>
+
+            {/* Vouching System - Traditional Susu Trust Building */}
+            {isMember && members.length > 0 && (
+              <VouchingSystem
+                groupAddress={groupAddress}
+                members={members}
+                currentUserAddress={userAddress}
+                onVouch={async (memberAddress, voucherAddress) => {
+                  // This would call the smart contract in production
+                  toast.success(`Successfully vouched for member!`);
+                  console.log(`Vouch: ${voucherAddress} vouched for ${memberAddress}`);
+                }}
+              />
+            )}
           </div>
 
           {/* Sidebar */}
