@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { formatENSName } from "../../utils/ens";
+import BasenameProfile from "../BasenameIntegration/BasenameProfile";
 import EFPProfile from "../EFPIntegration/EFPProfile";
-import ENSProfile from "../ENSIntegration/ENSProfile";
 import { toast } from "react-hot-toast";
 import { Address } from "viem";
 import { formatEther } from "viem";
@@ -190,7 +190,7 @@ export const SusuGroupCard = ({
           <div className="mb-4">
             <div className="text-sm text-gray-600 mb-2">Created by</div>
             <div className="bg-gray-50 rounded-lg p-2 space-y-2">
-              <ENSProfile address={group.creator} className="text-sm" />
+              <BasenameProfile address={group.creator} />
               <EFPProfile address={group.creator} className="text-xs text-gray-500" />
             </div>
           </div>
