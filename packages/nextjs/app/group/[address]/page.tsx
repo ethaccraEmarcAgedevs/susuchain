@@ -6,6 +6,7 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { formatEther } from "viem";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import BasenameProfile from "~~/components/BasenameIntegration/BasenameProfile";
 import ENSProfile from "~~/components/ENSIntegration/ENSProfile";
 import { SponsoredTxStatus } from "~~/components/Paymaster/SponsoredTxStatus";
 import { VerificationBadge } from "~~/components/SmartWallet/VerificationBadge";
@@ -419,7 +420,7 @@ const GroupDetailsPage = () => {
                       <div className="text-sm text-blue-600">Creator</div>
                     </div>
                   </div>
-                  <ENSProfile address={creator as `0x${string}`} />
+                  <BasenameProfile address={creator as `0x${string}`} />
                 </div>
 
                 {/* Other Members List - Stage 3 Implementation */}
@@ -454,7 +455,7 @@ const GroupDetailsPage = () => {
                               </div>
                             </div>
                           </div>
-                          <ENSProfile address={member.memberAddress as `0x${string}`} />
+                          <BasenameProfile address={member.memberAddress as `0x${string}`} />
                         </div>
                       ))}
 
