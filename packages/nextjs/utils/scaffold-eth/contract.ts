@@ -215,6 +215,9 @@ type WriteVariables = WriteContractVariables<Abi, string, any[], Config, number>
 export type TransactorFuncOptions = {
   onBlockConfirmation?: (txnReceipt: TransactionReceipt) => void;
   blockConfirmations?: number;
+  paymasterEnabled?: boolean;
+  operation?: string;
+  gasEstimate?: number;
 };
 
 export type ScaffoldWriteContractOptions = MutateOptions<
