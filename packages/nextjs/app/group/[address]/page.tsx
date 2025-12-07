@@ -6,12 +6,14 @@ import { useParams, useRouter } from "next/navigation";
 import { toast } from "react-hot-toast";
 import { formatEther } from "viem";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
+import GroupHealthIndicator from "~~/components/Analytics/GroupHealthIndicator";
 import BasenameProfile from "~~/components/BasenameIntegration/BasenameProfile";
 import ENSProfile from "~~/components/ENSIntegration/ENSProfile";
 import { SponsoredTxStatus } from "~~/components/Paymaster/SponsoredTxStatus";
 import { VerificationBadge } from "~~/components/SmartWallet/VerificationBadge";
 import { VouchingSystem } from "~~/components/SusuGroup/VouchingSystem";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
+import { useGroupAnalytics } from "~~/hooks/scaffold-eth/useGroupAnalytics";
 
 // SusuGroup ABI for safe direct calls
 const SUSU_GROUP_ABI = [
@@ -499,6 +501,9 @@ const GroupDetailsPage = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Group Health Analytics */}
+            <GroupHealthIndicator groupAddress={groupAddress as `0x${string}`} />
+
             {/* Gas Sponsorship Status */}
             {isConnected && isMember && <SponsoredTxStatus />}
 
