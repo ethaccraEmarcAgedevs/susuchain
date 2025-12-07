@@ -8,6 +8,7 @@ import { formatEther } from "viem";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import ENSProfile from "~~/components/ENSIntegration/ENSProfile";
 import { SponsoredTxStatus } from "~~/components/Paymaster/SponsoredTxStatus";
+import { VerificationBadge } from "~~/components/SmartWallet/VerificationBadge";
 import { VouchingSystem } from "~~/components/SusuGroup/VouchingSystem";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
@@ -441,9 +442,12 @@ const GroupDetailsPage = () => {
                               {member.memberAddress.slice(2, 4).toUpperCase()}
                             </div>
                             <div>
-                              <div className="font-medium text-gray-900">
-                                {member.ensName ||
-                                  `${member.memberAddress.slice(0, 6)}...${member.memberAddress.slice(-4)}`}
+                              <div className="flex items-center gap-2 mb-1">
+                                <span className="font-medium text-gray-900">
+                                  {member.ensName ||
+                                    `${member.memberAddress.slice(0, 6)}...${member.memberAddress.slice(-4)}`}
+                                </span>
+                                <VerificationBadge address={member.memberAddress as `0x${string}`} />
                               </div>
                               <div className="text-sm text-gray-500">
                                 Member #{index + 2} • {member.isActive ? "Active" : "Inactive"}
