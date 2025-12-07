@@ -1,8 +1,9 @@
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { Address, formatEther } from "viem";
-import { useAccount, useBalance, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
+import { useAccount, useBalance, useChainId, useWaitForTransactionReceipt, useWriteContract } from "wagmi";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
+import { getRemainingSponsored, isPaymasterAvailable } from "~~/services/web3/paymaster";
 
 const SUSU_GROUP_ABI = [
   {
@@ -40,8 +41,14 @@ export const ContributionForm = ({
   className = "",
 }: ContributionFormProps) => {
   const { address: userAddress } = useAccount();
+  const chainId = useChainId();
   const [error, setError] = useState("");
   const { trackContribution } = useAppKitAnalytics();
+
+  // Check Paymaster availability
+  const paymasterAvailable = isPaymasterAvailable(chainId);
+  const remainingSponsored = userAddress ? getRemainingSponsored(userAddress) : 0;
+  const isGasFree = paymasterAvailable && remainingSponsored > 0;
 
   // Get user's balance
   const { data: balance } = useBalance({
@@ -204,6 +211,25 @@ export const ContributionForm = ({
           Round {currentRound} is now active. Contribute to participate in this round.
         </p>
       </div>
+
+      {/* Gas-Free Badge */}
+      {isGasFree && (
+        <div className="mb-4 p-3 bg-gradient-to-r from-green-50 to-emerald-50 border border-green-200 rounded-lg">
+          <div className="flex items-center justify-center gap-2 text-green-800">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              viewBox="0 0 20 20"
+              fill="currentColor"
+            >
+              <path d="M11 3a1 1 0 10-2 0v1a1 1 0 102 0V3zM15.657 5.757a1 1 0 00-1.414-1.414l-.707.707a1 1 0 001.414 1.414l.707-.707zM18 10a1 1 0 01-1 1h-1a1 1 0 110-2h1a1 1 0 011 1zM5.05 6.464A1 1 0 106.464 5.05l-.707-.707a1 1 0 00-1.414 1.414l.707.707zM5 10a1 1 0 01-1 1H3a1 1 0 110-2h1a1 1 0 011 1zM8 16v-1h4v1a2 2 0 11-4 0zM12 14c.015-.34.208-.646.477-.859a4 4 0 10-4.954 0c.27.213.462.519.476.859h4.002z" />
+            </svg>
+            <span className="font-semibold">⚡ Gas-Free Transaction</span>
+            <span className="text-sm">({remainingSponsored} remaining)</span>
+          </div>
+          <p className="text-xs text-green-700 text-center mt-1">No ETH needed for gas fees!</p>
+        </div>
+      )}
 
       {/* Contribution Amount Display */}
       <div className="mb-6 p-4 bg-blue-50 rounded-lg">

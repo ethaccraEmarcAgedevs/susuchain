@@ -7,6 +7,7 @@ import { toast } from "react-hot-toast";
 import { formatEther } from "viem";
 import { useAccount, useReadContract, useWriteContract } from "wagmi";
 import ENSProfile from "~~/components/ENSIntegration/ENSProfile";
+import { SponsoredTxStatus } from "~~/components/Paymaster/SponsoredTxStatus";
 import { VouchingSystem } from "~~/components/SusuGroup/VouchingSystem";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
@@ -493,6 +494,9 @@ const GroupDetailsPage = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            {/* Gas Sponsorship Status */}
+            {isConnected && isMember && <SponsoredTxStatus />}
+
             {/* Quick Stats */}
             <div className="bg-white rounded-xl shadow-lg p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-4">Quick Stats</h3>
