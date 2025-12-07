@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Hash, parseEther } from "viem";
 import { useAccount } from "wagmi";
+import BasenameRegistration from "~~/components/BasenameIntegration/BasenameRegistration";
 import EFPProfile from "~~/components/EFPIntegration/EFPProfile";
 import ENSRegistration from "~~/components/ENSIntegration/ENSRegistration";
 import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
@@ -215,6 +216,13 @@ const CreateGroupPage = () => {
                     groupName={formData.groupName}
                     onENSNameChange={handleENSNameChange}
                     onValidityChange={handleENSValidityChange}
+                  />
+
+                  <BasenameRegistration
+                    groupName={formData.groupName}
+                    onBasenameChange={(basename, isValid) => {
+                      console.log("Base Name changed:", basename, "Valid:", isValid);
+                    }}
                   />
 
                   <div>
