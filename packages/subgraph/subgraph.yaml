@@ -1,0 +1,61 @@
+specVersion: 0.0.5
+schema:
+  file: ./schema.graphql
+dataSources:
+  - kind: ethereum
+    name: SusuFactory
+    network: base
+    source:
+      address: "0x0000000000000000000000000000000000000000" # Replace with actual deployed address
+      abi: SusuFactory
+      startBlock: 0 # Replace with deployment block
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Group
+        - PlatformStats
+        - DailyStats
+        - WeeklyStats
+        - MonthlyStats
+      abis:
+        - name: SusuFactory
+          file: ../hardhat/artifacts/contracts/SusuFactory.sol/SusuFactory.json
+        - name: SusuGroup
+          file: ../hardhat/artifacts/contracts/SusuGroup.sol/SusuGroup.json
+      eventHandlers:
+        - event: SusuGroupCreated(indexed address,string,address,uint256,uint256,uint256)
+          handler: handleGroupCreated
+      file: ./src/factory.ts
+templates:
+  - kind: ethereum
+    name: SusuGroup
+    network: base
+    source:
+      abi: SusuGroup
+    mapping:
+      kind: ethereum/events
+      apiVersion: 0.0.7
+      language: wasm/assemblyscript
+      entities:
+        - Group
+        - Member
+        - Contribution
+        - Payout
+        - Round
+        - DailyStats
+        - WeeklyStats
+      abis:
+        - name: SusuGroup
+          file: ../hardhat/artifacts/contracts/SusuGroup.sol/SusuGroup.json
+      eventHandlers:
+        - event: MemberJoined(indexed address,string,string)
+          handler: handleMemberJoined
+        - event: ContributionMade(indexed address,indexed uint256,uint256)
+          handler: handleContributionMade
+        - event: PayoutCompleted(indexed address,indexed uint256,uint256)
+          handler: handlePayoutCompleted
+        - event: RoundAdvanced(indexed uint256,indexed address)
+          handler: handleRoundAdvanced
+      file: ./src/group.ts

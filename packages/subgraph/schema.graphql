@@ -1,0 +1,133 @@
+type Group @entity {
+  id: ID! # Group contract address
+  name: String!
+  ensName: String!
+  basename: String
+  creator: Bytes!
+  contributionAmount: BigInt!
+  contributionInterval: BigInt!
+  maxMembers: Int!
+  currentMembers: Int!
+  currentRound: Int!
+  isActive: Boolean!
+  totalValueLocked: BigInt!
+  totalContributions: BigInt!
+  totalPayouts: BigInt!
+  createdAt: BigInt!
+  updatedAt: BigInt!
+  members: [Member!]! @derivedFrom(field: "group")
+  contributions: [Contribution!]! @derivedFrom(field: "group")
+  payouts: [Payout!]! @derivedFrom(field: "group")
+  roundHistory: [Round!]! @derivedFrom(field: "group")
+}
+
+type Member @entity {
+  id: ID! # group-address
+  group: Group!
+  address: Bytes!
+  ensName: String!
+  basename: String
+  efpProfile: String!
+  joinedAt: BigInt!
+  isActive: Boolean!
+  totalContributions: BigInt!
+  totalPayoutsReceived: BigInt!
+  contributionCount: Int!
+  missedContributions: Int!
+  reliabilityScore: BigDecimal!
+  contributions: [Contribution!]! @derivedFrom(field: "member")
+  payoutsReceived: [Payout!]! @derivedFrom(field: "beneficiary")
+}
+
+type Contribution @entity {
+  id: ID! # tx-hash-log-index
+  group: Group!
+  member: Member!
+  round: Round!
+  amount: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+  isOnTime: Boolean!
+}
+
+type Payout @entity {
+  id: ID! # tx-hash-log-index
+  group: Group!
+  beneficiary: Member!
+  round: Round!
+  amount: BigInt!
+  timestamp: BigInt!
+  transactionHash: Bytes!
+}
+
+type Round @entity {
+  id: ID! # group-address-round-number
+  group: Group!
+  roundNumber: Int!
+  beneficiary: Bytes!
+  startTime: BigInt!
+  endTime: BigInt
+  expectedContributions: Int!
+  actualContributions: Int!
+  totalAmount: BigInt!
+  isCompleted: Boolean!
+  contributions: [Contribution!]! @derivedFrom(field: "round")
+  payout: Payout @derivedFrom(field: "round")
+}
+
+type PlatformStats @entity {
+  id: ID! # "platform-stats"
+  totalGroups: Int!
+  activeGroups: Int!
+  completedGroups: Int!
+  totalMembers: Int!
+  totalValueLocked: BigInt!
+  totalContributions: BigInt!
+  totalPayouts: BigInt!
+  averageGroupSize: BigDecimal!
+  averageContributionAmount: BigInt!
+  updatedAt: BigInt!
+}
+
+type DailyStats @entity {
+  id: ID! # date-YYYY-MM-DD
+  date: String!
+  timestamp: BigInt!
+  groupsCreated: Int!
+  membersJoined: Int!
+  contributionsMade: Int!
+  contributionVolume: BigInt!
+  payoutsCompleted: Int!
+  payoutVolume: BigInt!
+  activeGroups: Int!
+  totalValueLocked: BigInt!
+}
+
+type WeeklyStats @entity {
+  id: ID! # week-YYYY-WW
+  week: String!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt!
+  groupsCreated: Int!
+  membersJoined: Int!
+  contributionsMade: Int!
+  contributionVolume: BigInt!
+  payoutsCompleted: Int!
+  payoutVolume: BigInt!
+  averageGroupSize: BigDecimal!
+  memberRetention: BigDecimal!
+}
+
+type MonthlyStats @entity {
+  id: ID! # month-YYYY-MM
+  month: String!
+  startTimestamp: BigInt!
+  endTimestamp: BigInt!
+  groupsCreated: Int!
+  membersJoined: Int!
+  contributionsMade: Int!
+  contributionVolume: BigInt!
+  payoutsCompleted: Int!
+  payoutVolume: BigInt!
+  growthRate: BigDecimal!
+}
