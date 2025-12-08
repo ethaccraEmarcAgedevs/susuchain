@@ -3,8 +3,11 @@ pragma solidity ^0.8.20;
 
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
+import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
 contract SusuGroup is ReentrancyGuard, Ownable {
+    using SafeERC20 for IERC20;
     struct Member {
         address memberAddress;
         string ensName;
@@ -32,6 +35,10 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     uint256 public maxMembers;
     uint256 public currentRound;
     bool public groupActive;
+
+    // Asset management (address(0) = ETH, otherwise ERC20 token address)
+    address public contributionAsset;
+    bool public isStablecoin;
 
     // Member management
     address[] public memberAddresses;
@@ -70,7 +77,8 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         uint256 _contributionAmount,
         uint256 _contributionInterval,
         uint256 _maxMembers,
-        address _creator
+        address _creator,
+        address _contributionAsset
     ) Ownable(_creator) {
         require(_maxMembers > 1, "Group must have at least 2 members");
         require(_contributionAmount > 0, "Contribution amount must be greater than 0");
@@ -84,9 +92,20 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         currentRound = 0;
         groupActive = true;
         nextBeneficiaryIndex = 0;
+        contributionAsset = _contributionAsset;
+
+        // Check if asset is a known stablecoin
+        isStablecoin = _isKnownStablecoin(_contributionAsset);
 
         // Creator automatically joins as first member
         _addMember(_creator, "", "");
+    }
+
+    function _isKnownStablecoin(address _asset) internal pure returns (bool) {
+        // Base USDC
+        if (_asset == 0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913) return true;
+        // Add other stablecoins as needed
+        return false;
     }
 
     function joinGroup(string memory _ensName, string memory _efpProfile) external {
@@ -147,18 +166,28 @@ contract SusuGroup is ReentrancyGuard, Ownable {
 
     function contributeToRound() external payable onlyMember groupIsActive nonReentrant {
         require(currentRound > 0, "Group has not started yet");
-        require(msg.value == contributionAmount, "Incorrect contribution amount");
         require(!rounds[currentRound].hasContributed[msg.sender], "Already contributed to this round");
         require(!rounds[currentRound].completed, "Round already completed");
 
         ContributionRound storage round = rounds[currentRound];
-        round.hasContributed[msg.sender] = true;
-        round.totalAmount += msg.value;
 
+        // Handle ETH or ERC20 contribution
+        if (contributionAsset == address(0)) {
+            // ETH contribution
+            require(msg.value == contributionAmount, "Incorrect ETH contribution amount");
+            round.totalAmount += msg.value;
+        } else {
+            // ERC20 token contribution
+            require(msg.value == 0, "Do not send ETH for token contributions");
+            IERC20(contributionAsset).safeTransferFrom(msg.sender, address(this), contributionAmount);
+            round.totalAmount += contributionAmount;
+        }
+
+        round.hasContributed[msg.sender] = true;
         members[msg.sender].contributionCount++;
         members[msg.sender].lastContribution = block.timestamp;
 
-        emit ContributionMade(msg.sender, currentRound, msg.value);
+        emit ContributionMade(msg.sender, currentRound, contributionAmount);
 
         // Check if all members have contributed
         if (_allMembersContributed(currentRound)) {
@@ -187,8 +216,14 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         nextBeneficiaryIndex++;
 
         // Transfer payout to beneficiary
-        (bool success, ) = payable(beneficiary).call{ value: payoutAmount }("");
-        require(success, "Transfer failed");
+        if (contributionAsset == address(0)) {
+            // ETH payout
+            (bool success, ) = payable(beneficiary).call{ value: payoutAmount }("");
+            require(success, "ETH transfer failed");
+        } else {
+            // ERC20 token payout
+            IERC20(contributionAsset).safeTransfer(beneficiary, payoutAmount);
+        }
 
         emit PayoutDistributed(beneficiary, currentRound, payoutAmount);
 
