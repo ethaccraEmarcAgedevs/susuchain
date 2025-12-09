@@ -12,6 +12,7 @@ import { useScaffoldWriteContract } from "~~/hooks/scaffold-eth";
 import { useAppKitAnalytics } from "~~/hooks/scaffold-eth/useAppKitAnalytics";
 import { useRequireAuth } from "~~/hooks/scaffold-eth/useRequireAuth";
 import { useTransactionStatus } from "~~/hooks/scaffold-eth/useTransactionStatus";
+import { BASE_TOKENS, getAvailableTokens, parseTokenAmount } from "~~/utils/tokens";
 
 interface FormData {
   groupName: string;
@@ -20,6 +21,7 @@ interface FormData {
   contributionInterval: string;
   maxMembers: string;
   description: string;
+  contributionAsset: string;
 }
 
 const CreateGroupPage = () => {
@@ -29,10 +31,11 @@ const CreateGroupPage = () => {
   const [formData, setFormData] = useState<FormData>({
     groupName: "",
     ensName: "",
-    contributionAmount: "0.1",
+    contributionAmount: "100",
     contributionInterval: "weekly",
     maxMembers: "5",
     description: "",
+    contributionAsset: "0x833589fCD6eDb6E08f4c7C32D4f71b54bdA02913", // Default to USDC
   });
   const [isENSValid, setIsENSValid] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -125,16 +128,20 @@ const CreateGroupPage = () => {
 
     try {
       const intervalInSeconds = getIntervalInSeconds(formData.contributionInterval);
-      const contributionAmountWei = parseEther(formData.contributionAmount);
+      const contributionAmountParsed = parseTokenAmount(
+        formData.contributionAmount,
+        formData.contributionAsset as `0x${string}`,
+      );
 
       const hash = await createSusuGroup({
         functionName: "createSusuGroup",
         args: [
           formData.groupName,
           formData.ensName,
-          contributionAmountWei,
+          contributionAmountParsed,
           BigInt(intervalInSeconds),
           BigInt(parseInt(formData.maxMembers)),
+          formData.contributionAsset as `0x${string}`,
         ],
       });
 
@@ -245,38 +252,69 @@ const CreateGroupPage = () => {
               <div>
                 <h3 className="text-lg font-semibold text-gray-900 mb-4">Financial Settings</h3>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-4">
+                  {/* Token Selector */}
                   <div>
-                    <label htmlFor="contributionAmount" className="block text-sm font-medium text-gray-700 mb-1">
-                      Contribution Amount (ETH) *
-                    </label>
-                    <input
-                      type="number"
-                      id="contributionAmount"
-                      step="0.01"
-                      min="0.01"
-                      value={formData.contributionAmount}
-                      onChange={e => handleInputChange("contributionAmount", e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
-                    />
-                    <p className="text-xs text-gray-500 mt-1">Amount each member contributes per round</p>
-                  </div>
-
-                  <div>
-                    <label htmlFor="contributionInterval" className="block text-sm font-medium text-gray-700 mb-1">
-                      Contribution Schedule *
+                    <label htmlFor="contributionAsset" className="block text-sm font-medium text-gray-700 mb-1">
+                      Contribution Asset *
                     </label>
                     <select
-                      id="contributionInterval"
-                      value={formData.contributionInterval}
-                      onChange={e => handleInputChange("contributionInterval", e.target.value)}
+                      id="contributionAsset"
+                      value={formData.contributionAsset}
+                      onChange={e => handleInputChange("contributionAsset", e.target.value)}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
                     >
-                      <option value="daily">Daily</option>
-                      <option value="weekly">Weekly</option>
-                      <option value="biweekly">Bi-weekly</option>
-                      <option value="monthly">Monthly</option>
+                      {getAvailableTokens().map(token => (
+                        <option key={token.address} value={token.address}>
+                          {token.symbol} - {token.name} {token.isStablecoin && "(Stable)"}
+                        </option>
+                      ))}
                     </select>
+                    <p className="text-xs text-gray-500 mt-1">
+                      {formData.contributionAsset === BASE_TOKENS.USDC.address
+                        ? "Recommended: USDC provides stable, predictable amounts"
+                        : "ETH value may fluctuate"}
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                      <label htmlFor="contributionAmount" className="block text-sm font-medium text-gray-700 mb-1">
+                        Contribution Amount *
+                      </label>
+                      <div className="relative">
+                        <input
+                          type="number"
+                          id="contributionAmount"
+                          step={formData.contributionAsset === BASE_TOKENS.USDC.address ? "1" : "0.01"}
+                          min={formData.contributionAsset === BASE_TOKENS.USDC.address ? "1" : "0.01"}
+                          value={formData.contributionAmount}
+                          onChange={e => handleInputChange("contributionAmount", e.target.value)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 placeholder:text-gray-400"
+                        />
+                        <span className="absolute right-3 top-2.5 text-sm text-gray-500">
+                          {formData.contributionAsset === BASE_TOKENS.USDC.address ? "USDC" : "ETH"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-gray-500 mt-1">Amount each member contributes per round</p>
+                    </div>
+
+                    <div>
+                      <label htmlFor="contributionInterval" className="block text-sm font-medium text-gray-700 mb-1">
+                        Contribution Schedule *
+                      </label>
+                      <select
+                        id="contributionInterval"
+                        value={formData.contributionInterval}
+                        onChange={e => handleInputChange("contributionInterval", e.target.value)}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 text-gray-900 bg-white"
+                      >
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="biweekly">Bi-weekly</option>
+                        <option value="monthly">Monthly</option>
+                      </select>
+                    </div>
                   </div>
                 </div>
               </div>
