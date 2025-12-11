@@ -10,7 +10,6 @@ import GroupHealthIndicator from "~~/components/Analytics/GroupHealthIndicator";
 import BasenameProfile from "~~/components/BasenameIntegration/BasenameProfile";
 import ENSProfile from "~~/components/ENSIntegration/ENSProfile";
 import { SponsoredTxStatus } from "~~/components/Paymaster/SponsoredTxStatus";
-import ReputationBadge from "~~/components/Reputation/ReputationBadge";
 import { VerificationBadge } from "~~/components/SmartWallet/VerificationBadge";
 import { VouchingSystem } from "~~/components/SusuGroup/VouchingSystem";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
@@ -452,7 +451,6 @@ const GroupDetailsPage = () => {
                                     `${member.memberAddress.slice(0, 6)}...${member.memberAddress.slice(-4)}`}
                                 </span>
                                 <VerificationBadge address={member.memberAddress as `0x${string}`} />
-                                <ReputationBadge address={member.memberAddress as `0x${string}`} size="sm" showScore={false} />
                               </div>
                               <div className="text-sm text-gray-500">
                                 Member #{index + 2} • {member.isActive ? "Active" : "Inactive"}
