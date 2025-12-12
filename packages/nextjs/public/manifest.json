@@ -1,5 +1,46 @@
 {
-  "name": "Scaffold-ETH 2 DApp",
-  "description": "A DApp built with Scaffold-ETH",
-  "iconPath": "logo.svg"
+  "name": "SusuChain - Decentralized Savings Groups",
+  "short_name": "SusuChain",
+  "description": "Rotating savings and credit groups on Base blockchain",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["finance", "productivity", "social"],
+  "icons": [
+    {
+      "src": "/logo.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Create Group",
+      "short_name": "Create",
+      "description": "Create a new Susu group",
+      "url": "/create-group"
+    },
+    {
+      "name": "My Groups",
+      "short_name": "Groups",
+      "description": "View your Susu groups",
+      "url": "/groups"
+    },
+    {
+      "name": "NFT Gallery",
+      "short_name": "NFT",
+      "description": "View your membership NFT",
+      "url": "/nft/gallery"
+    }
+  ]
 }
