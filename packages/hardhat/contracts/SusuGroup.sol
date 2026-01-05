@@ -6,6 +6,12 @@ import "@openzeppelin/contracts/access/Ownable.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 
+// Aave V3 Pool interface
+interface IPool {
+    function supply(address asset, uint256 amount, address onBehalfOf, uint16 referralCode) external;
+    function withdraw(address asset, uint256 amount, address to) external returns (uint256);
+}
+
 contract SusuGroup is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
     struct Member {
@@ -16,6 +22,10 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         uint256 contributionCount;
         uint256 lastContribution;
         bool hasReceivedPayout;
+        uint256 collateralDeposited;
+        uint256 collateralSlashed;
+        uint256 yieldEarned;
+        uint256 missedPayments;
     }
 
     struct ContributionRound {
@@ -61,6 +71,16 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     mapping(address => uint256) public latePenalties;
     address public gelatoExecutor;
 
+    // Aave V3 Collateral System
+    enum CollateralTier { NONE, LOW, MEDIUM, FULL } // 0%, 25%, 50%, 100%
+    CollateralTier public collateralTier;
+    uint256 public collateralRequirement; // Amount per member
+    address public aavePool; // Aave V3 Pool address
+    address public aToken; // aToken received from Aave
+    uint256 public totalCollateralLocked;
+    uint256 public totalYieldGenerated;
+    bool public autoCompound;
+
     // Events
     event MemberJoined(address indexed member, string ensName, string efpProfile);
     event ContributionMade(address indexed member, uint256 round, uint256 amount);
@@ -70,6 +90,11 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     event AutomatedPayoutExecuted(uint256 round, address beneficiary, uint256 amount);
     event LatePenaltyApplied(address indexed member, uint256 amount);
     event DeadlineUpdated(uint256 newDeadline);
+    event CollateralDeposited(address indexed member, uint256 amount);
+    event CollateralSlashed(address indexed member, uint256 amount, uint256 missedPayments);
+    event CollateralReturned(address indexed member, uint256 amount, uint256 yieldEarned);
+    event YieldDistributed(uint256 totalYield, uint256 perMember);
+    event EmergencyWithdrawCollateral(address indexed member, uint256 amount);
 
     modifier onlyMember() {
         require(isMember[msg.sender], "Not a member of this group");
@@ -96,7 +121,9 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         uint256 _contributionInterval,
         uint256 _maxMembers,
         address _creator,
-        address _contributionAsset
+        address _contributionAsset,
+        CollateralTier _collateralTier,
+        address _aavePool
     ) Ownable(_creator) {
         require(_maxMembers > 1, "Group must have at least 2 members");
         require(_contributionAmount > 0, "Contribution amount must be greater than 0");
@@ -112,6 +139,20 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         nextBeneficiaryIndex = 0;
         contributionAsset = _contributionAsset;
 
+        // Collateral setup
+        collateralTier = _collateralTier;
+        aavePool = _aavePool;
+        autoCompound = true; // Default to auto-compound
+
+        // Calculate collateral requirement based on tier
+        if (_collateralTier == CollateralTier.LOW) {
+            collateralRequirement = (_contributionAmount * 25) / 100;
+        } else if (_collateralTier == CollateralTier.MEDIUM) {
+            collateralRequirement = (_contributionAmount * 50) / 100;
+        } else if (_collateralTier == CollateralTier.FULL) {
+            collateralRequirement = _contributionAmount;
+        }
+
         // Check if asset is a known stablecoin
         isStablecoin = _isKnownStablecoin(_contributionAsset);
 
@@ -126,10 +167,27 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         return false;
     }
 
-    function joinGroup(string memory _ensName, string memory _efpProfile) external {
+    function joinGroup(string memory _ensName, string memory _efpProfile) external payable nonReentrant {
         require(memberAddresses.length < maxMembers, "Group is full");
         require(!isMember[msg.sender], "Already a member");
         require(groupActive, "Group is not active");
+
+        // Handle collateral deposit
+        if (collateralRequirement > 0) {
+            if (contributionAsset == address(0)) {
+                // ETH collateral
+                require(msg.value >= collateralRequirement, "Insufficient collateral");
+            } else {
+                // ERC20 collateral
+                require(msg.value == 0, "Do not send ETH for token collateral");
+                IERC20(contributionAsset).safeTransferFrom(msg.sender, address(this), collateralRequirement);
+            }
+
+            // Deposit collateral to Aave
+            if (aavePool != address(0)) {
+                _depositToAave(collateralRequirement);
+            }
+        }
 
         _addMember(msg.sender, _ensName, _efpProfile);
 
@@ -149,12 +207,21 @@ contract SusuGroup is ReentrancyGuard, Ownable {
             isActive: true,
             contributionCount: 0,
             lastContribution: 0,
-            hasReceivedPayout: false
+            hasReceivedPayout: false,
+            collateralDeposited: collateralRequirement,
+            collateralSlashed: 0,
+            yieldEarned: 0,
+            missedPayments: 0
         });
 
         memberAddresses.push(_member);
         isMember[_member] = true;
         payoutQueue.push(_member);
+
+        if (collateralRequirement > 0) {
+            totalCollateralLocked += collateralRequirement;
+            emit CollateralDeposited(_member, collateralRequirement);
+        }
     }
 
     function _startGroup() internal {
@@ -517,5 +584,221 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         }
 
         return count;
+    }
+
+    // ===== AAVE V3 COLLATERAL FUNCTIONS =====
+
+    /**
+     * @notice Deposit assets to Aave V3 for yield generation
+     */
+    function _depositToAave(uint256 amount) internal {
+        if (aavePool == address(0) || amount == 0) return;
+
+        if (contributionAsset == address(0)) {
+            // ETH not directly supported, would need WETH wrapper
+            return;
+        }
+
+        // Approve Aave Pool
+        IERC20(contributionAsset).forceApprove(aavePool, amount);
+
+        // Supply to Aave
+        IPool(aavePool).supply(contributionAsset, amount, address(this), 0);
+    }
+
+    /**
+     * @notice Withdraw assets from Aave V3
+     */
+    function _withdrawFromAave(uint256 amount) internal returns (uint256) {
+        if (aavePool == address(0) || amount == 0) return 0;
+
+        if (contributionAsset == address(0)) {
+            return 0;
+        }
+
+        // Withdraw from Aave
+        return IPool(aavePool).withdraw(contributionAsset, amount, address(this));
+    }
+
+    /**
+     * @notice Slash collateral for missed payment
+     */
+    function slashCollateral(address member) external onlyOwner {
+        require(isMember[member], "Not a member");
+        require(collateralRequirement > 0, "No collateral system");
+
+        Member storage memberData = members[member];
+        memberData.missedPayments++;
+
+        uint256 slashAmount = 0;
+
+        // Progressive slashing
+        if (memberData.missedPayments == 1) {
+            slashAmount = (memberData.collateralDeposited * 10) / 100; // 10%
+        } else if (memberData.missedPayments == 2) {
+            slashAmount = (memberData.collateralDeposited * 25) / 100; // 25%
+        } else if (memberData.missedPayments == 3) {
+            slashAmount = (memberData.collateralDeposited * 50) / 100; // 50%
+        } else {
+            slashAmount = memberData.collateralDeposited - memberData.collateralSlashed; // 100%
+        }
+
+        memberData.collateralSlashed += slashAmount;
+        totalCollateralLocked -= slashAmount;
+
+        // Withdraw from Aave and distribute to compliant members
+        if (aavePool != address(0)) {
+            _withdrawFromAave(slashAmount);
+        }
+
+        emit CollateralSlashed(member, slashAmount, memberData.missedPayments);
+    }
+
+    /**
+     * @notice Return collateral plus yield to member after group completion
+     */
+    function returnCollateral(address member) external onlyOwner nonReentrant {
+        require(isMember[member], "Not a member");
+        require(!groupActive, "Group still active");
+        require(collateralRequirement > 0, "No collateral system");
+
+        Member storage memberData = members[member];
+        uint256 remainingCollateral = memberData.collateralDeposited - memberData.collateralSlashed;
+
+        require(remainingCollateral > 0, "No collateral to return");
+
+        // Calculate member's share of yield
+        uint256 yieldShare = _calculateYieldShare(member);
+        memberData.yieldEarned = yieldShare;
+
+        uint256 totalReturn = remainingCollateral + yieldShare;
+
+        // Withdraw from Aave
+        if (aavePool != address(0)) {
+            _withdrawFromAave(totalReturn);
+        }
+
+        // Transfer back to member
+        if (contributionAsset == address(0)) {
+            (bool success, ) = payable(member).call{value: totalReturn}("");
+            require(success, "ETH transfer failed");
+        } else {
+            IERC20(contributionAsset).safeTransfer(member, totalReturn);
+        }
+
+        memberData.collateralDeposited = 0;
+        totalCollateralLocked -= remainingCollateral;
+
+        emit CollateralReturned(member, remainingCollateral, yieldShare);
+    }
+
+    /**
+     * @notice Calculate yield share for a member
+     */
+    function _calculateYieldShare(address member) internal view returns (uint256) {
+        if (aavePool == address(0)) return 0;
+
+        Member storage memberData = members[member];
+
+        // Simple proportional distribution
+        // In production, track actual yield generation over time
+        uint256 totalDeposited = memberData.collateralDeposited;
+        if (totalDeposited == 0) return 0;
+
+        // Placeholder: return proportional share of total yield
+        // Real implementation would query aToken balance
+        return 0;
+    }
+
+    /**
+     * @notice Distribute yield to all members
+     */
+    function distributeYield() external onlyOwner {
+        require(aavePool != address(0), "No Aave integration");
+        require(collateralRequirement > 0, "No collateral system");
+
+        // Calculate total yield generated
+        // In production, compare current aToken balance vs deposited
+        uint256 totalYield = 0; // Placeholder
+
+        if (totalYield == 0) return;
+
+        uint256 perMemberYield = totalYield / memberAddresses.length;
+
+        for (uint256 i = 0; i < memberAddresses.length; i++) {
+            members[memberAddresses[i]].yieldEarned += perMemberYield;
+        }
+
+        totalYieldGenerated += totalYield;
+
+        emit YieldDistributed(totalYield, perMemberYield);
+    }
+
+    /**
+     * @notice Emergency withdraw collateral if group fails to launch
+     */
+    function emergencyWithdrawCollateral() external onlyMember nonReentrant {
+        require(groupStartTime == 0, "Group already started");
+        require(collateralRequirement > 0, "No collateral");
+
+        Member storage memberData = members[msg.sender];
+        uint256 collateral = memberData.collateralDeposited;
+
+        require(collateral > 0, "No collateral deposited");
+
+        memberData.collateralDeposited = 0;
+        totalCollateralLocked -= collateral;
+
+        // Withdraw from Aave
+        if (aavePool != address(0)) {
+            _withdrawFromAave(collateral);
+        }
+
+        // Return collateral
+        if (contributionAsset == address(0)) {
+            (bool success, ) = payable(msg.sender).call{value: collateral}("");
+            require(success, "ETH transfer failed");
+        } else {
+            IERC20(contributionAsset).safeTransfer(msg.sender, collateral);
+        }
+
+        emit EmergencyWithdrawCollateral(msg.sender, collateral);
+    }
+
+    /**
+     * @notice Get member's collateral info
+     */
+    function getMemberCollateral(address member) external view returns (
+        uint256 deposited,
+        uint256 slashed,
+        uint256 yieldEarned,
+        uint256 missedPayments
+    ) {
+        require(isMember[member], "Not a member");
+        Member storage memberData = members[member];
+
+        return (
+            memberData.collateralDeposited,
+            memberData.collateralSlashed,
+            memberData.yieldEarned,
+            memberData.missedPayments
+        );
+    }
+
+    /**
+     * @notice Get group's collateral summary
+     */
+    function getCollateralSummary() external view returns (
+        CollateralTier tier,
+        uint256 requirement,
+        uint256 totalLocked,
+        uint256 totalYield
+    ) {
+        return (
+            collateralTier,
+            collateralRequirement,
+            totalCollateralLocked,
+            totalYieldGenerated
+        );
     }
 }

@@ -49,7 +49,9 @@ contract SusuFactory is Ownable {
         uint256 _contributionAmount,
         uint256 _contributionInterval,
         uint256 _maxMembers,
-        address _contributionAsset
+        address _contributionAsset,
+        SusuGroup.CollateralTier _collateralTier,
+        address _aavePool
     ) external returns (address) {
         require(bytes(_groupName).length > 0, "Group name cannot be empty");
         require(bytes(_ensName).length > 0, "ENS name cannot be empty");
@@ -66,7 +68,9 @@ contract SusuFactory is Ownable {
             _contributionInterval,
             _maxMembers,
             msg.sender,
-            _contributionAsset
+            _contributionAsset,
+            _collateralTier,
+            _aavePool
         );
 
         address groupAddress = address(newGroup);
