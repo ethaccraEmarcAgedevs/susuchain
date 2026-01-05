@@ -1,0 +1,17 @@
+{
+  "name": "@susuchain/gelato-functions",
+  "version": "1.0.0",
+  "description": "Gelato Web3 Functions for automated Susu group payouts",
+  "scripts": {
+    "test": "npx w3f test susu-payout-automation.ts --logs",
+    "deploy": "npx w3f deploy susu-payout-automation.ts"
+  },
+  "dependencies": {
+    "@gelatonetwork/web3-functions-sdk": "^2.0.0",
+    "ethers": "^5.7.2"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  }
+}
