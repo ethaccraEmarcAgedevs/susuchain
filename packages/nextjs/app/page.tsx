@@ -6,6 +6,7 @@ import type { NextPage } from "next";
 import { Address } from "viem";
 import { useAccount, useReadContract } from "wagmi";
 import SusuGroupCard from "~~/components/SusuGroup/SusuGroupCard";
+import { BaseEcosystemBadge } from "~~/components/BaseEcosystemBadge";
 import { useScaffoldReadContract } from "~~/hooks/scaffold-eth";
 
 const Home: NextPage = () => {
@@ -44,12 +45,9 @@ const Home: NextPage = () => {
       <div className="bg-gradient-to-br from-blue-50 to-indigo-100 py-16">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            {/* Base Badge */}
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-white rounded-full shadow-sm mb-6">
-              <div className="w-6 h-6 rounded-full bg-blue-600 flex items-center justify-center">
-                <span className="text-white text-xs font-bold">B</span>
-              </div>
-              <span className="text-sm font-semibold text-gray-700">Built on Base Network</span>
+            {/* Base Ecosystem Badge */}
+            <div className="mb-6">
+              <BaseEcosystemBadge variant="full" showGrant />
             </div>
 
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
