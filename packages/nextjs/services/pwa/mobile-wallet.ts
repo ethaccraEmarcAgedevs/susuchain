@@ -32,10 +32,14 @@ export function isInMetaMaskMobile(): boolean {
 }
 
 /**
- * Get deep link for Coinbase Wallet
+ * Get deep link for Coinbase Wallet (optimized for Base network)
  */
 export function getCoinbaseWalletDeepLink(dappUrl: string): string {
   const encodedUrl = encodeURIComponent(dappUrl);
+  // Use cb-wallet:// scheme for direct deep linking on mobile
+  if (isMobileBrowser()) {
+    return `cb-wallet://dapp?url=${encodedUrl}`;
+  }
   return `https://go.cb-w.com/dapp?cb_url=${encodedUrl}`;
 }
 
