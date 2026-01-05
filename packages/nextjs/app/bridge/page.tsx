@@ -82,18 +82,63 @@ const BridgePage = () => {
           </div>
         </div>
 
-        {/* Bridge Action */}
-        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-xl font-bold text-gray-900 mb-2">Start Bridging</h3>
-              <p className="text-gray-600">Bridge ETH or USDC from Ethereum, Arbitrum, Optimism, or Polygon</p>
+        {/* CCTP Fast Bridge - Highlighted */}
+        <div className="bg-gradient-to-r from-[#0052FF] to-[#0066FF] rounded-xl shadow-lg p-6 mb-4">
+          <div className="flex items-start gap-4">
+            <div className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+              <svg className="w-6 h-6 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+              </svg>
+            </div>
+            <div className="flex-1">
+              <div className="flex items-center gap-2 mb-2">
+                <h3 className="text-xl font-bold text-white">Fast USDC Bridge</h3>
+                <span className="px-2 py-0.5 bg-green-400 text-green-900 text-xs font-semibold rounded-full">RECOMMENDED</span>
+              </div>
+              <p className="text-white/90 mb-4">Bridge USDC in just 15-20 minutes using Circle's CCTP. Perfect for joining Susu groups with stable contributions!</p>
+              <div className="flex items-center gap-4 text-sm text-white/80">
+                <div className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clipRule="evenodd" />
+                  </svg>
+                  <span>15-20 mins</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>No bridge fees</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M2.166 4.999A11.954 11.954 0 0010 1.944 11.954 11.954 0 0017.834 5c.11.65.166 1.32.166 2.001 0 5.225-3.34 9.67-8 11.317C5.34 16.67 2 12.225 2 7c0-.682.057-1.35.166-2.001zm11.541 3.708a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
+                  </svg>
+                  <span>Native USDC</span>
+                </div>
+              </div>
             </div>
             <button
               onClick={() => setShowBridgeModal(true)}
-              className="px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition-colors"
+              className="px-6 py-3 bg-white text-[#0052FF] font-semibold rounded-lg hover:bg-gray-100 transition-colors whitespace-nowrap"
             >
-              Bridge Assets
+              Bridge USDC
+            </button>
+          </div>
+        </div>
+
+        {/* Other Bridge Options */}
+        <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">Bridge Other Assets</h3>
+              <p className="text-gray-600">Bridge ETH from Ethereum, Arbitrum, Optimism, or Polygon</p>
+              <p className="text-sm text-gray-500 mt-1">Note: ETH bridging takes ~7 days</p>
+            </div>
+            <button
+              onClick={() => setShowBridgeModal(true)}
+              className="px-6 py-3 bg-gray-100 text-gray-700 font-semibold rounded-lg hover:bg-gray-200 transition-colors"
+            >
+              Bridge ETH
             </button>
           </div>
         </div>
