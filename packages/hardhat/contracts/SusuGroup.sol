@@ -54,12 +54,22 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     address[] public payoutQueue;
     uint256 public nextBeneficiaryIndex;
 
+    // Gelato automation
+    uint256 public roundDeadline;
+    uint256 public constant LATE_PENALTY_RATE = 5; // 5% penalty
+    uint256 public constant AUTOMATION_FEE = 10; // 0.1% (10 basis points)
+    mapping(address => uint256) public latePenalties;
+    address public gelatoExecutor;
+
     // Events
     event MemberJoined(address indexed member, string ensName, string efpProfile);
     event ContributionMade(address indexed member, uint256 round, uint256 amount);
     event PayoutDistributed(address indexed beneficiary, uint256 round, uint256 amount);
     event NewRoundStarted(uint256 round, address beneficiary);
     event GroupCompleted();
+    event AutomatedPayoutExecuted(uint256 round, address beneficiary, uint256 amount);
+    event LatePenaltyApplied(address indexed member, uint256 amount);
+    event DeadlineUpdated(uint256 newDeadline);
 
     modifier onlyMember() {
         require(isMember[msg.sender], "Not a member of this group");
@@ -68,6 +78,14 @@ contract SusuGroup is ReentrancyGuard, Ownable {
 
     modifier groupIsActive() {
         require(groupActive, "Group is not active");
+        _;
+    }
+
+    modifier onlyGelatoOrOwner() {
+        require(
+            msg.sender == gelatoExecutor || msg.sender == owner(),
+            "Only Gelato executor or owner"
+        );
         _;
     }
 
@@ -160,8 +178,10 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         round.completed = false;
 
         nextRoundStartTime = block.timestamp + contributionInterval;
+        roundDeadline = block.timestamp + contributionInterval;
 
         emit NewRoundStarted(currentRound, beneficiary);
+        emit DeadlineUpdated(roundDeadline);
     }
 
     function contributeToRound() external payable onlyMember groupIsActive nonReentrant {
@@ -333,5 +353,169 @@ contract SusuGroup is ReentrancyGuard, Ownable {
             (bool success, ) = payable(owner()).call{ value: balance }("");
             require(success, "Emergency withdraw failed");
         }
+    }
+
+    // ===== GELATO AUTOMATION FUNCTIONS =====
+
+    /**
+     * @notice Set Gelato executor address (called once during setup)
+     */
+    function setGelatoExecutor(address _executor) external onlyOwner {
+        require(_executor != address(0), "Invalid executor address");
+        gelatoExecutor = _executor;
+    }
+
+    /**
+     * @notice Gelato checker function - determines if payout can be executed
+     * @return canExec Whether payout should be executed
+     * @return execPayload The function call to execute
+     */
+    function canExecutePayout() external view returns (bool canExec, bytes memory execPayload) {
+        // Check conditions for automated payout
+        if (!groupActive) {
+            return (false, bytes("Group not active"));
+        }
+
+        if (currentRound == 0) {
+            return (false, bytes("No active round"));
+        }
+
+        if (rounds[currentRound].completed) {
+            return (false, bytes("Round already completed"));
+        }
+
+        // Check if deadline has passed
+        bool deadlinePassed = block.timestamp >= roundDeadline;
+        bool allContributed = _allMembersContributed(currentRound);
+
+        // Execute if all contributed OR deadline passed
+        if (allContributed || deadlinePassed) {
+            execPayload = abi.encodeWithSelector(
+                this.executeScheduledPayout.selector
+            );
+            return (true, execPayload);
+        }
+
+        return (false, bytes("Waiting for contributions or deadline"));
+    }
+
+    /**
+     * @notice Execute automated payout (called by Gelato or owner)
+     * @dev Applies penalties for late/missing contributions
+     */
+    function executeScheduledPayout() external onlyGelatoOrOwner nonReentrant {
+        require(groupActive, "Group not active");
+        require(currentRound > 0, "No active round");
+        require(!rounds[currentRound].completed, "Round already completed");
+
+        ContributionRound storage round = rounds[currentRound];
+        bool deadlinePassed = block.timestamp >= roundDeadline;
+
+        // Calculate penalties for late/missing contributions
+        uint256 totalPenalty = 0;
+        uint256 contributingMembers = 0;
+
+        for (uint256 i = 0; i < memberAddresses.length; i++) {
+            address member = memberAddresses[i];
+
+            if (round.hasContributed[member]) {
+                contributingMembers++;
+                // Check if contribution was late
+                if (members[member].lastContribution > roundDeadline) {
+                    uint256 penalty = (contributionAmount * LATE_PENALTY_RATE) / 100;
+                    latePenalties[member] += penalty;
+                    totalPenalty += penalty;
+                    emit LatePenaltyApplied(member, penalty);
+                }
+            } else if (deadlinePassed) {
+                // Member missed contribution entirely
+                uint256 penalty = (contributionAmount * LATE_PENALTY_RATE * 2) / 100; // Double penalty
+                latePenalties[member] += penalty;
+                totalPenalty += penalty;
+                emit LatePenaltyApplied(member, penalty);
+            }
+        }
+
+        // Calculate automation fee (0.1% of total)
+        uint256 automationFee = (round.totalAmount * AUTOMATION_FEE) / 10000;
+
+        // Calculate final payout amount
+        uint256 payoutAmount = round.totalAmount - automationFee;
+
+        // If some members didn't contribute, redistribute their portion to beneficiary
+        if (contributingMembers < memberAddresses.length && deadlinePassed) {
+            // Payout proceeds with reduced amount (only from contributors)
+            payoutAmount = round.totalAmount - automationFee;
+        }
+
+        // Mark round as completed
+        round.completed = true;
+        address beneficiary = round.beneficiary;
+        members[beneficiary].hasReceivedPayout = true;
+        nextBeneficiaryIndex++;
+
+        // Transfer payout to beneficiary
+        if (contributionAsset == address(0)) {
+            // ETH payout
+            (bool success, ) = payable(beneficiary).call{ value: payoutAmount }("");
+            require(success, "ETH transfer failed");
+            // Send automation fee to owner for Gelato sponsorship
+            if (automationFee > 0) {
+                (bool feeSuccess, ) = payable(owner()).call{ value: automationFee }("");
+                require(feeSuccess, "Fee transfer failed");
+            }
+        } else {
+            // ERC20 token payout
+            IERC20(contributionAsset).safeTransfer(beneficiary, payoutAmount);
+            if (automationFee > 0) {
+                IERC20(contributionAsset).safeTransfer(owner(), automationFee);
+            }
+        }
+
+        emit AutomatedPayoutExecuted(currentRound, beneficiary, payoutAmount);
+        emit PayoutDistributed(beneficiary, currentRound, payoutAmount);
+
+        // Start next round or complete group
+        if (nextBeneficiaryIndex >= payoutQueue.length) {
+            groupActive = false;
+            emit GroupCompleted();
+        } else {
+            _startNewRound();
+        }
+    }
+
+    /**
+     * @notice Get time remaining until deadline
+     */
+    function getTimeUntilDeadline() external view returns (uint256) {
+        if (block.timestamp >= roundDeadline) {
+            return 0;
+        }
+        return roundDeadline - block.timestamp;
+    }
+
+    /**
+     * @notice Check if member has late penalties
+     */
+    function getMemberPenalties(address _member) external view returns (uint256) {
+        return latePenalties[_member];
+    }
+
+    /**
+     * @notice Get contributing members count for current round
+     */
+    function getContributingMembersCount() external view returns (uint256) {
+        if (currentRound == 0) return 0;
+
+        uint256 count = 0;
+        ContributionRound storage round = rounds[currentRound];
+
+        for (uint256 i = 0; i < memberAddresses.length; i++) {
+            if (round.hasContributed[memberAddresses[i]]) {
+                count++;
+            }
+        }
+
+        return count;
     }
 }
