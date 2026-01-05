@@ -29,8 +29,8 @@ const scaffoldConfig = {
   // If you want to use a different RPC for a specific network, you can add it here.
   // The key is the chain ID, and the value is the HTTP RPC URL
   rpcOverrides: {
-    // Example:
-    // [chains.mainnet.id]: "https://mainnet.buidlguidl.com",
+    // Base mainnet - using Coinbase's official RPC for optimal performance
+    [chains.base.id]: "https://mainnet.base.org",
   },
 
   // ==================================================================================
