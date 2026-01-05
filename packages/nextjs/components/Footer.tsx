@@ -45,16 +45,22 @@ export const Footer = () => {
       </div>
       <div className="w-full">
         <ul className="menu menu-horizontal w-full">
-          <div className="flex justify-center items-center gap-2 text-sm w-full">
-            <div className="text-center">
-              <a href="https://github.com/scaffold-eth/se-2" target="_blank" rel="noreferrer" className="link">
-                Fork me
+          <div className="flex justify-center items-center gap-2 text-sm w-full flex-wrap">
+            <div className="flex justify-center items-center gap-2">
+              <div className="w-5 h-5 rounded-full bg-[#0052FF] flex items-center justify-center">
+                <span className="text-white text-xs font-bold">B</span>
+              </div>
+              <p className="m-0 text-center">
+                Built on
+              </p>
+              <a href="https://base.org" target="_blank" rel="noreferrer" className="link font-semibold">
+                Base
               </a>
             </div>
             <span>·</span>
             <div className="flex justify-center items-center gap-2">
               <p className="m-0 text-center">
-                Built with <HeartIcon className="inline-block h-4 w-4" /> at
+                Powered by <HeartIcon className="inline-block h-4 w-4" />
               </p>
               <a
                 className="flex justify-center items-center gap-1"
@@ -68,8 +74,8 @@ export const Footer = () => {
             </div>
             <span>·</span>
             <div className="text-center">
-              <a href="https://t.me/joinchat/KByvmRe5wkR-8F_zz6AjpA" target="_blank" rel="noreferrer" className="link">
-                Support
+              <a href="https://docs.base.org" target="_blank" rel="noreferrer" className="link">
+                Base Docs
               </a>
             </div>
           </div>

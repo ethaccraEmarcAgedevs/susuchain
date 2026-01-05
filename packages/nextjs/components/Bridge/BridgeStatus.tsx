@@ -78,7 +78,7 @@ export const BridgeStatus = ({ transaction }: BridgeStatusProps) => {
           <div className="flex items-center justify-between text-sm">
             <span className="text-gray-600">Source Tx:</span>
             <a
-              href={`https://etherscan.io/tx/${transaction.sourceTxHash}`}
+              href={`https://basescan.org/tx/${transaction.sourceTxHash}`}
               target="_blank"
               rel="noopener noreferrer"
               className="text-blue-600 hover:underline font-mono"

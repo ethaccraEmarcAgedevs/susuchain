@@ -13,8 +13,10 @@ export const DEFAULT_ALCHEMY_API_KEY = "oKxs-03sij-U_N0iOlrSsZFr29-IqbuF";
 
 const scaffoldConfig = {
   // The networks on which your DApp is live
-  // Primary network: Base Mainnet (production)
-  targetNetworks: [chains.base],
+  // Primary network: Base Mainnet (production), Base Sepolia (testing)
+  targetNetworks: process.env.NEXT_PUBLIC_ENABLE_TESTNETS === "true"
+    ? [chains.base, chains.baseSepolia]
+    : [chains.base],
 
   // The interval at which your front-end polls the RPC servers for new data
   // it has no effect if you only target the local network (default is 4000)
@@ -29,8 +31,10 @@ const scaffoldConfig = {
   // If you want to use a different RPC for a specific network, you can add it here.
   // The key is the chain ID, and the value is the HTTP RPC URL
   rpcOverrides: {
-    // Example:
-    // [chains.mainnet.id]: "https://mainnet.buidlguidl.com",
+    // Base mainnet - using Coinbase's official RPC for optimal performance
+    [chains.base.id]: "https://mainnet.base.org",
+    // Base Sepolia testnet - official testnet RPC
+    [chains.baseSepolia.id]: "https://sepolia.base.org",
   },
 
   // ==================================================================================

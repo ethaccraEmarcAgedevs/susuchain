@@ -2,12 +2,14 @@
 
 import { AddressCopyIcon } from "./AddressCopyIcon";
 import { AddressLinkWrapper } from "./AddressLinkWrapper";
+import { useState, useEffect } from "react";
 import { Address as AddressType, getAddress, isAddress } from "viem";
 import { normalize } from "viem/ens";
 import { useEnsAvatar, useEnsName } from "wagmi";
 import { BlockieAvatar } from "~~/components/scaffold-eth";
 import { useTargetNetwork } from "~~/hooks/scaffold-eth/useTargetNetwork";
 import { getBlockExplorerAddressLink } from "~~/utils/scaffold-eth";
+import { getBaseName } from "~~/utils/basenames";
 
 const textSizeMap = {
   "3xs": "text-[10px]",
@@ -85,7 +87,9 @@ export const Address = ({
   const checkSumAddress = address ? getAddress(address) : undefined;
 
   const { targetNetwork } = useTargetNetwork();
+  const [basename, setBasename] = useState<string | null>(null);
 
+  // Fetch ENS name
   const { data: ens, isLoading: isEnsNameLoading } = useEnsName({
     address: checkSumAddress,
     chainId: 1,
@@ -102,11 +106,19 @@ export const Address = ({
     },
   });
 
+  // Fetch Basename on Base network
+  useEffect(() => {
+    if (checkSumAddress && targetNetwork.id === 8453) {
+      getBaseName(checkSumAddress).then(setBasename);
+    }
+  }, [checkSumAddress, targetNetwork.id]);
+
   const shortAddress = checkSumAddress?.slice(0, 6) + "..." + checkSumAddress?.slice(-4);
   const displayAddress = format === "long" ? checkSumAddress : shortAddress;
-  const displayEnsOrAddress = ens || displayAddress;
+  // Prioritize Basename on Base, then ENS, then address
+  const displayEnsOrAddress = basename || ens || displayAddress;
 
-  const showSkeleton = !checkSumAddress || (!onlyEnsOrAddress && (ens || isEnsNameLoading));
+  const showSkeleton = !checkSumAddress || (!onlyEnsOrAddress && (basename || ens || isEnsNameLoading));
 
   const addressSize = showSkeleton && !onlyEnsOrAddress ? getPrevSize(textSizeMap, size, 2) : size;
   const ensSize = getNextSize(textSizeMap, addressSize);
@@ -163,7 +175,7 @@ export const Address = ({
                 disableAddressLink={disableAddressLink}
                 blockExplorerAddressLink={blockExplorerAddressLink}
               >
-                {ens}
+                {basename || ens}
               </AddressLinkWrapper>
             </span>
           ))}
