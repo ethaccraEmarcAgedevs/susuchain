@@ -12,6 +12,12 @@ interface IPool {
     function withdraw(address asset, uint256 amount, address to) external returns (uint256);
 }
 
+// ReferralRegistry interface
+interface IReferralRegistry {
+    function recordReferral(address referee, string memory referralCode) external;
+    function recordContribution(address referee, uint256 amount) external;
+}
+
 contract SusuGroup is ReentrancyGuard, Ownable {
     using SafeERC20 for IERC20;
     struct Member {
@@ -81,8 +87,12 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     uint256 public totalYieldGenerated;
     bool public autoCompound;
 
+    // Referral System
+    address public referralRegistry;
+
     // Events
     event MemberJoined(address indexed member, string ensName, string efpProfile);
+    event MemberJoinedWithReferral(address indexed member, string referralCode);
     event ContributionMade(address indexed member, uint256 round, uint256 amount);
     event PayoutDistributed(address indexed beneficiary, uint256 round, uint256 amount);
     event NewRoundStarted(uint256 round, address beneficiary);
@@ -123,7 +133,8 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         address _creator,
         address _contributionAsset,
         CollateralTier _collateralTier,
-        address _aavePool
+        address _aavePool,
+        address _referralRegistry
     ) Ownable(_creator) {
         require(_maxMembers > 1, "Group must have at least 2 members");
         require(_contributionAmount > 0, "Contribution amount must be greater than 0");
@@ -143,6 +154,9 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         collateralTier = _collateralTier;
         aavePool = _aavePool;
         autoCompound = true; // Default to auto-compound
+
+        // Referral setup
+        referralRegistry = _referralRegistry;
 
         // Calculate collateral requirement based on tier
         if (_collateralTier == CollateralTier.LOW) {
@@ -167,10 +181,23 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         return false;
     }
 
-    function joinGroup(string memory _ensName, string memory _efpProfile) external payable nonReentrant {
+    function joinGroup(
+        string memory _ensName,
+        string memory _efpProfile,
+        string memory _referralCode
+    ) external payable nonReentrant {
         require(memberAddresses.length < maxMembers, "Group is full");
         require(!isMember[msg.sender], "Already a member");
         require(groupActive, "Group is not active");
+
+        // Record referral if code provided
+        if (bytes(_referralCode).length > 0 && referralRegistry != address(0)) {
+            try IReferralRegistry(referralRegistry).recordReferral(msg.sender, _referralCode) {
+                emit MemberJoinedWithReferral(msg.sender, _referralCode);
+            } catch {
+                // Silently fail if referral recording fails
+            }
+        }
 
         // Handle collateral deposit
         if (collateralRequirement > 0) {
@@ -273,6 +300,15 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         round.hasContributed[msg.sender] = true;
         members[msg.sender].contributionCount++;
         members[msg.sender].lastContribution = block.timestamp;
+
+        // Record contribution for referral tracking
+        if (referralRegistry != address(0)) {
+            try IReferralRegistry(referralRegistry).recordContribution(msg.sender, contributionAmount) {
+                // Successfully recorded contribution
+            } catch {
+                // Silently fail if contribution recording fails
+            }
+        }
 
         emit ContributionMade(msg.sender, currentRound, contributionAmount);
 
