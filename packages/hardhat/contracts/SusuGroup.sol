@@ -90,6 +90,20 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     // Referral System
     address public referralRegistry;
 
+    // Chainlink Price Feeds
+    address public priceFeedAddress;
+    bool public isUSDDenominated;
+    uint256 public baseUSDAmount;
+    uint256 public lastPriceUpdate;
+    uint256 public lastETHPrice;
+    uint256 public constant MAX_PRICE_ADJUSTMENT = 2000;
+
+    // Chainlink VRF
+    bool public useVRF;
+    uint256 public vrfRequestId;
+    bool public vrfFulfilled;
+    uint256 public randomSeed;
+
     // Events
     event MemberJoined(address indexed member, string ensName, string efpProfile);
     event MemberJoinedWithReferral(address indexed member, string referralCode);
@@ -105,6 +119,9 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     event CollateralReturned(address indexed member, uint256 amount, uint256 yieldEarned);
     event YieldDistributed(uint256 totalYield, uint256 perMember);
     event EmergencyWithdrawCollateral(address indexed member, uint256 amount);
+    event PriceUpdated(uint256 oldPrice, uint256 newPrice, uint256 newContributionAmount);
+    event VRFRequested(uint256 requestId);
+    event PayoutQueueShuffled(uint256 randomSeed);
 
     modifier onlyMember() {
         require(isMember[msg.sender], "Not a member of this group");
@@ -134,7 +151,10 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         address _contributionAsset,
         CollateralTier _collateralTier,
         address _aavePool,
-        address _referralRegistry
+        address _referralRegistry,
+        address _priceFeedAddress,
+        bool _isUSDDenominated,
+        bool _useVRF
     ) Ownable(_creator) {
         require(_maxMembers > 1, "Group must have at least 2 members");
         require(_contributionAmount > 0, "Contribution amount must be greater than 0");
@@ -157,6 +177,11 @@ contract SusuGroup is ReentrancyGuard, Ownable {
 
         // Referral setup
         referralRegistry = _referralRegistry;
+
+        // Chainlink setup
+        priceFeedAddress = _priceFeedAddress;
+        isUSDDenominated = _isUSDDenominated;
+        useVRF = _useVRF;
 
         // Calculate collateral requirement based on tier
         if (_collateralTier == CollateralTier.LOW) {
