@@ -127,7 +127,7 @@ describe("SusuChain", function () {
     });
 
     it("Should allow users to join the group", async function () {
-      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp_profile");
+      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp_profile", "");
 
       const memberInfo = await susuGroup.getMemberInfo(user1.address);
       expect(memberInfo.ensName).to.equal("user1.ens.eth");
@@ -137,8 +137,8 @@ describe("SusuChain", function () {
 
     it("Should start group when max members is reached", async function () {
       // Join until we reach max members (creator is already member 1)
-      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp");
-      await susuGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp");
+      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp", "");
+      await susuGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp", "");
 
       const groupInfo = await susuGroup.getGroupInfo();
       expect(groupInfo.round).to.equal(1); // Group should have started
@@ -147,8 +147,8 @@ describe("SusuChain", function () {
 
     it("Should allow contributions to active round", async function () {
       // Fill up the group
-      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp");
-      await susuGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp");
+      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp", "");
+      await susuGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp", "");
 
       // Make a contribution
       await susuGroup.connect(owner).contributeToRound({ value: ethers.parseEther("0.1") });
@@ -159,8 +159,8 @@ describe("SusuChain", function () {
 
     it("Should complete payout when all members contribute", async function () {
       // Fill up the group
-      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp");
-      await susuGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp");
+      await susuGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp", "");
+      await susuGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp", "");
 
       const initialBalance = await ethers.provider.getBalance(owner.address);
 
@@ -206,9 +206,9 @@ describe("SusuChain", function () {
       const largeGroup = await ethers.getContractAt("SusuGroup", largeGroupAddress);
 
       // Fill up the group with all 3 additional users
-      await largeGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp");
-      await largeGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp");
-      await largeGroup.connect(user3).joinGroup("user3.ens.eth", "user3_efp");
+      await largeGroup.connect(user1).joinGroup("user1.ens.eth", "user1_efp", "");
+      await largeGroup.connect(user2).joinGroup("user2.ens.eth", "user2_efp", "");
+      await largeGroup.connect(user3).joinGroup("user3.ens.eth", "user3_efp", "");
 
       const groupInfo = await largeGroup.getGroupInfo();
       expect(groupInfo.currentMems).to.equal(4); // All members joined
