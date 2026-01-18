@@ -62,12 +62,12 @@ contract SusuFactory is Ownable {
         bool _isUSDDenominated,
         bool _useVRF
     ) external returns (address) {
-        require(bytes(_groupName).length > 0, "Group name cannot be empty");
-        require(bytes(_ensName).length > 0, "ENS name cannot be empty");
-        require(!ensNameTaken[_ensName], "ENS name already taken");
-        require(_contributionAmount > 0, "Contribution amount must be greater than 0");
-        require(_maxMembers >= 2 && _maxMembers <= 20, "Max members must be between 2 and 20");
-        require(_contributionInterval >= 1 days, "Contribution interval must be at least 1 day");
+        require(bytes(_groupName).length > 0);
+        require(bytes(_ensName).length > 0);
+        require(!ensNameTaken[_ensName]);
+        require(_contributionAmount > 0);
+        require(_maxMembers >= 2 && _maxMembers <= 20);
+        require(_contributionInterval >= 1 days);
 
         // Deploy new SusuGroup contract
         SusuGroup newGroup = new SusuGroup(
@@ -128,67 +128,11 @@ contract SusuFactory is Ownable {
         return totalGroupsCreated;
     }
 
-    function getAllGroupsWithDetails()
-        external
-        view
-        returns (
-            address[] memory groupAddresses,
-            string[] memory groupNames,
-            string[] memory ensNames,
-            address[] memory creators,
-            uint256[] memory contributionAmounts,
-            uint256[] memory maxMembers,
-            uint256[] memory currentMembers,
-            uint256[] memory contributionIntervals,
-            bool[] memory isActiveStates
-        )
-    {
-        uint256 length = allGroups.length;
-
-        groupAddresses = new address[](length);
-        groupNames = new string[](length);
-        ensNames = new string[](length);
-        creators = new address[](length);
-        contributionAmounts = new uint256[](length);
-        maxMembers = new uint256[](length);
-        currentMembers = new uint256[](length);
-        contributionIntervals = new uint256[](length);
-        isActiveStates = new bool[](length);
-
-        for (uint256 i = 0; i < length; i++) {
-            address groupAddr = allGroups[i];
-            GroupInfo memory info = groupInfo[groupAddr];
-            SusuGroup group = SusuGroup(groupAddr);
-
-            groupAddresses[i] = groupAddr;
-            groupNames[i] = info.groupName;
-            ensNames[i] = info.ensName;
-            creators[i] = info.creator;
-            contributionAmounts[i] = info.contributionAmount;
-            maxMembers[i] = info.maxMembers;
-            currentMembers[i] = group.getMemberCount();
-            contributionIntervals[i] = group.contributionInterval();
-            isActiveStates[i] = group.groupActive();
-        }
-    }
 
     function getGroupsByCreator(address _creator) external view returns (address[] memory) {
         return creatorGroups[_creator];
     }
 
-    function getActiveGroups() external view returns (address[] memory) {
-        address[] memory activeGroupsList = new address[](activeGroups);
-        uint256 activeIndex = 0;
-
-        for (uint256 i = 0; i < allGroups.length; i++) {
-            if (groupInfo[allGroups[i]].isActive) {
-                activeGroupsList[activeIndex] = allGroups[i];
-                activeIndex++;
-            }
-        }
-
-        return activeGroupsList;
-    }
 
     function getGroupDetails(
         address _groupAddress
@@ -205,9 +149,9 @@ contract SusuFactory is Ownable {
             bool isActive
         )
     {
-        require(_groupAddress != address(0), "Invalid group address");
+        require(_groupAddress != address(0));
         GroupInfo memory info = groupInfo[_groupAddress];
-        require(info.groupAddress != address(0), "Group not found");
+        require(info.groupAddress != address(0));
 
         return (
             info.groupName,
@@ -220,54 +164,6 @@ contract SusuFactory is Ownable {
         );
     }
 
-    function getGroupsByFilter(
-        uint256 _minContribution,
-        uint256 _maxContribution,
-        uint256 _minMembers,
-        uint256 _maxMembers,
-        bool _onlyActive
-    ) external view returns (address[] memory) {
-        uint256 count = 0;
-
-        // First pass: count matching groups
-        for (uint256 i = 0; i < allGroups.length; i++) {
-            GroupInfo memory info = groupInfo[allGroups[i]];
-
-            if (
-                (_onlyActive && !info.isActive) ||
-                (info.contributionAmount < _minContribution) ||
-                (info.contributionAmount > _maxContribution) ||
-                (info.maxMembers < _minMembers) ||
-                (info.maxMembers > _maxMembers)
-            ) {
-                continue;
-            }
-            count++;
-        }
-
-        // Second pass: populate the array
-        address[] memory filteredGroups = new address[](count);
-        uint256 index = 0;
-
-        for (uint256 i = 0; i < allGroups.length; i++) {
-            GroupInfo memory info = groupInfo[allGroups[i]];
-
-            if (
-                (_onlyActive && !info.isActive) ||
-                (info.contributionAmount < _minContribution) ||
-                (info.contributionAmount > _maxContribution) ||
-                (info.maxMembers < _minMembers) ||
-                (info.maxMembers > _maxMembers)
-            ) {
-                continue;
-            }
-
-            filteredGroups[index] = allGroups[i];
-            index++;
-        }
-
-        return filteredGroups;
-    }
 
     function isENSNameAvailable(string memory _ensName) external view returns (bool) {
         return !ensNameTaken[_ensName];
@@ -278,9 +174,9 @@ contract SusuFactory is Ownable {
     }
 
     function updateGroupStatus(address _groupAddress) external {
-        require(msg.sender == _groupAddress, "Only group contract can update status");
+        require(msg.sender == _groupAddress);
         GroupInfo storage info = groupInfo[_groupAddress];
-        require(info.groupAddress != address(0), "Group not found");
+        require(info.groupAddress != address(0));
 
         SusuGroup group = SusuGroup(_groupAddress);
         bool isActive = group.groupActive();
@@ -295,8 +191,8 @@ contract SusuFactory is Ownable {
     // Admin functions
     function emergencyDeactivateGroup(address _groupAddress) external onlyOwner {
         GroupInfo storage info = groupInfo[_groupAddress];
-        require(info.groupAddress != address(0), "Group not found");
-        require(info.isActive, "Group already inactive");
+        require(info.groupAddress != address(0));
+        require(info.isActive);
 
         info.isActive = false;
         activeGroups--;
@@ -304,27 +200,4 @@ contract SusuFactory is Ownable {
         emit GroupStatusChanged(_groupAddress, false);
     }
 
-    function getRecentGroups(uint256 _count) external view returns (address[] memory) {
-        uint256 count = _count > allGroups.length ? allGroups.length : _count;
-        address[] memory recentGroups = new address[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            recentGroups[i] = allGroups[allGroups.length - 1 - i];
-        }
-
-        return recentGroups;
-    }
-
-    function getPopularGroups(uint256 _count) external view returns (address[] memory) {
-        // For now, return most recent groups
-        // In future versions, this could be based on member count or activity
-        uint256 count = _count > allGroups.length ? allGroups.length : _count;
-        address[] memory popularGroups = new address[](count);
-
-        for (uint256 i = 0; i < count; i++) {
-            popularGroups[i] = allGroups[allGroups.length - 1 - i];
-        }
-
-        return popularGroups;
-    }
 }
