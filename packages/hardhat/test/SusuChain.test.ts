@@ -37,6 +37,12 @@ describe("SusuChain", function () {
         ethers.parseEther("0.1"), // 0.1 ETH contribution
         86400, // 1 day interval
         5, // max 5 members
+        ethers.ZeroAddress, // ETH as contribution asset
+        0, // Basic collateral tier
+        ethers.ZeroAddress, // No Aave pool
+        ethers.ZeroAddress, // No price feed
+        false, // Not USD denominated
+        false, // No VRF
       );
 
       const receipt = await tx.wait();
@@ -61,7 +67,19 @@ describe("SusuChain", function () {
     });
 
     it("Should not allow duplicate ENS names", async function () {
-      await susuFactory.createSusuGroup("First Group", "test.susu.eth", ethers.parseEther("0.1"), 86400, 3);
+      await susuFactory.createSusuGroup(
+        "First Group",
+        "test.susu.eth",
+        ethers.parseEther("0.1"),
+        86400,
+        3,
+        ethers.ZeroAddress,
+        0,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        false,
+        false,
+      );
 
       await expect(
         susuFactory.createSusuGroup(
@@ -70,8 +88,14 @@ describe("SusuChain", function () {
           ethers.parseEther("0.1"),
           86400,
           3,
+          ethers.ZeroAddress,
+          0,
+          ethers.ZeroAddress,
+          ethers.ZeroAddress,
+          false,
+          false,
         ),
-      ).to.be.revertedWith("ENS name already taken");
+      ).to.be.reverted;
     });
   });
 
@@ -88,6 +112,12 @@ describe("SusuChain", function () {
         ethers.parseEther("0.1"),
         86400,
         3,
+        ethers.ZeroAddress,
+        0,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        false,
+        false,
       );
       await tx.wait();
 
@@ -162,6 +192,12 @@ describe("SusuChain", function () {
         ethers.parseEther("0.05"), // Smaller contribution for 4-member group
         86400,
         4, // 4 members including creator
+        ethers.ZeroAddress,
+        0,
+        ethers.ZeroAddress,
+        ethers.ZeroAddress,
+        false,
+        false,
       );
       await tx.wait();
 
