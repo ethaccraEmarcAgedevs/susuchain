@@ -43,6 +43,12 @@ contract SusuFactory is Ownable {
         activeGroups = 0;
     }
 
+    // Referral registry address
+    address public referralRegistry;
+
+    // Price feed addresses
+    address public ethUsdPriceFeed;
+
     function createSusuGroup(
         string memory _groupName,
         string memory _ensName,
@@ -51,7 +57,10 @@ contract SusuFactory is Ownable {
         uint256 _maxMembers,
         address _contributionAsset,
         SusuGroup.CollateralTier _collateralTier,
-        address _aavePool
+        address _aavePool,
+        address _priceFeedAddress,
+        bool _isUSDDenominated,
+        bool _useVRF
     ) external returns (address) {
         require(bytes(_groupName).length > 0, "Group name cannot be empty");
         require(bytes(_ensName).length > 0, "ENS name cannot be empty");
@@ -70,7 +79,11 @@ contract SusuFactory is Ownable {
             msg.sender,
             _contributionAsset,
             _collateralTier,
-            _aavePool
+            _aavePool,
+            referralRegistry,
+            _priceFeedAddress,
+            _isUSDDenominated,
+            _useVRF
         );
 
         address groupAddress = address(newGroup);
