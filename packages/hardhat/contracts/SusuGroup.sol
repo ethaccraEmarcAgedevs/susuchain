@@ -94,14 +94,14 @@ contract SusuGroup is ReentrancyGuard, Ownable {
 
     // Chainlink Price Feeds
     address public priceFeedAddress;
-    bool public isUSDDenominated;
-    uint256 public baseUSDAmount;
+    bool public isUSDDenominated; // True if contributions are in USD terms
+    uint256 public baseUSDAmount; // Base USD amount if USD-denominated
     uint256 public lastPriceUpdate;
     uint256 public lastETHPrice;
-    uint256 public constant MAX_PRICE_ADJUSTMENT = 2000;
+    uint256 public constant MAX_PRICE_ADJUSTMENT = 2000; // 20% max adjustment per round
 
     // Chainlink VRF
-    bool public useVRF;
+    bool public useVRF; // True if group uses VRF for random ordering
     uint256 public vrfRequestId;
     bool public vrfFulfilled;
     uint256 public randomSeed;
@@ -164,7 +164,6 @@ contract SusuGroup is ReentrancyGuard, Ownable {
 
         groupName = _groupName;
         groupENSName = _groupENSName;
-        contributionAmount = _contributionAmount;
         contributionInterval = _contributionInterval;
         maxMembers = _maxMembers;
         currentRound = 0;
@@ -185,13 +184,28 @@ contract SusuGroup is ReentrancyGuard, Ownable {
         isUSDDenominated = _isUSDDenominated;
         useVRF = _useVRF;
 
+        // Set contribution amount based on denomination
+        if (_isUSDDenominated && _priceFeedAddress != address(0)) {
+            // Store base USD amount
+            baseUSDAmount = _contributionAmount;
+
+            // Get current ETH price and convert to ETH amount
+            (uint256 ethPrice, , ) = ChainlinkPriceFeed.getETHUSDPrice(_priceFeedAddress);
+            contributionAmount = ChainlinkPriceFeed.convertUSDToETH(_contributionAmount, ethPrice);
+            lastETHPrice = ethPrice;
+            lastPriceUpdate = block.timestamp;
+        } else {
+            // Direct ETH amount
+            contributionAmount = _contributionAmount;
+        }
+
         // Calculate collateral requirement based on tier
         if (_collateralTier == CollateralTier.LOW) {
-            collateralRequirement = (_contributionAmount * 25) / 100;
+            collateralRequirement = (contributionAmount * 25) / 100;
         } else if (_collateralTier == CollateralTier.MEDIUM) {
-            collateralRequirement = (_contributionAmount * 50) / 100;
+            collateralRequirement = (contributionAmount * 50) / 100;
         } else if (_collateralTier == CollateralTier.FULL) {
-            collateralRequirement = _contributionAmount;
+            collateralRequirement = contributionAmount;
         }
 
         // Check if asset is a known stablecoin
@@ -281,7 +295,89 @@ contract SusuGroup is ReentrancyGuard, Ownable {
     function _startGroup() internal {
         groupStartTime = block.timestamp;
         nextRoundStartTime = block.timestamp;
+
+        // If VRF is enabled, shuffle payout queue
+        if (useVRF) {
+            _shufflePayoutQueue();
+        }
+
         _startNewRound();
+    }
+
+    /**
+     * @notice Shuffle payout queue using block hash as fallback randomness
+     * @dev In production, this should use Chainlink VRF for true randomness
+     */
+    function _shufflePayoutQueue() internal {
+        // Use block hash as source of randomness (fallback)
+        // In production with VRF integration, this would wait for VRF fulfillment
+        uint256 seed = uint256(keccak256(abi.encodePacked(block.timestamp, block.prevrandao, msg.sender)));
+
+        randomSeed = seed;
+
+        // Fisher-Yates shuffle using RandomPayoutQueue library
+        payoutQueue = RandomPayoutQueue.shuffle(payoutQueue, seed);
+
+        emit PayoutQueueShuffled(seed);
+    }
+
+    /**
+     * @notice Update contribution amount based on current price (USD-denominated groups)
+     */
+    function updateContributionPrice() external {
+        require(isUSDDenominated, "Group is not USD-denominated");
+        require(priceFeedAddress != address(0), "No price feed configured");
+
+        // Get current ETH price
+        (uint256 currentPrice, , uint256 updatedAt) = ChainlinkPriceFeed.getETHUSDPrice(priceFeedAddress);
+
+        // Check if price has deviated significantly
+        (bool hasDeviated, uint256 deviationBps) = ChainlinkPriceFeed.checkPriceDeviation(
+            lastETHPrice,
+            currentPrice,
+            MAX_PRICE_ADJUSTMENT
+        );
+
+        // Only update if deviation is significant
+        if (hasDeviated) {
+            uint256 oldAmount = contributionAmount;
+
+            // Calculate new ETH amount required for baseUSDAmount
+            uint256 newAmount = ChainlinkPriceFeed.convertUSDToETH(baseUSDAmount, currentPrice);
+
+            contributionAmount = newAmount;
+            lastETHPrice = currentPrice;
+            lastPriceUpdate = updatedAt;
+
+            emit PriceUpdated(oldAmount, newAmount, contributionAmount);
+        }
+    }
+
+    /**
+     * @notice Get current USD value of contribution
+     * @return usdValue USD value (18 decimals)
+     */
+    function getContributionUSDValue() external view returns (uint256 usdValue) {
+        if (priceFeedAddress != address(0)) {
+            (uint256 currentPrice, , ) = ChainlinkPriceFeed.getETHUSDPrice(priceFeedAddress);
+            usdValue = ChainlinkPriceFeed.convertETHToUSD(contributionAmount, currentPrice);
+        } else {
+            usdValue = 0;
+        }
+    }
+
+    /**
+     * @notice Get current ETH price from feed
+     * @return price ETH/USD price (8 decimals)
+     * @return updatedAt Last update timestamp
+     */
+    function getCurrentETHPrice() external view returns (uint256 price, uint256 updatedAt) {
+        if (priceFeedAddress != address(0)) {
+            (price, , updatedAt) = ChainlinkPriceFeed.getETHUSDPrice(priceFeedAddress);
+        } else {
+            price = 0;
+            updatedAt = 0;
+        }
     }
 
     function _startNewRound() internal {
