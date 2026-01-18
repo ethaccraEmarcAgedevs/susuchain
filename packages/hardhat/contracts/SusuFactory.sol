@@ -112,6 +112,14 @@ contract SusuFactory is Ownable {
         return groupAddress;
     }
 
+    function setReferralRegistry(address _referralRegistry) external onlyOwner {
+        referralRegistry = _referralRegistry;
+    }
+
+    function setPriceFeed(address _priceFeed) external onlyOwner {
+        ethUsdPriceFeed = _priceFeed;
+    }
+
     function getAllGroups() external view returns (address[] memory) {
         return allGroups;
     }
