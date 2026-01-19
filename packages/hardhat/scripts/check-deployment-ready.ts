@@ -34,8 +34,9 @@ async function main() {
     const balanceInEth = ethers.formatEther(balance);
     console.log("💰 Balance: " + balanceInEth + " ETH");
 
-    if (balance < ethers.parseEther("0.01")) {
-      console.log("⚠️  Warning: Low balance! Need at least 0.02 ETH for deployment");
+    if (balance < ethers.parseEther("0.0005")) {
+      console.log("⚠️  Warning: Low balance! Need at least 0.001 ETH for deployment");
+      console.log("   (Actual cost: ~0.0001 ETH on Base - super cheap!)");
       console.log("   Bridge ETH to Base: https://bridge.base.org/");
       allChecks = false;
     } else {

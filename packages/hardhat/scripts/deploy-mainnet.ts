@@ -19,8 +19,8 @@ async function main() {
   console.log("Network:", (await ethers.provider.getNetwork()).name);
   console.log("Chain ID:", (await ethers.provider.getNetwork()).chainId);
 
-  if (balance < ethers.parseEther("0.01")) {
-    throw new Error("Insufficient balance. Need at least 0.01 ETH for deployment.");
+  if (balance < ethers.parseEther("0.0005")) {
+    throw new Error("Insufficient balance. Need at least 0.0005 ETH for deployment (actual cost ~0.0001 ETH on Base).");
   }
 
   console.log("\n📝 Step 1: Deploying SusuToken...");
