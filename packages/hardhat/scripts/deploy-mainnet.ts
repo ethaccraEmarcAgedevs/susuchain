@@ -19,27 +19,27 @@ async function main() {
   console.log("Network:", (await ethers.provider.getNetwork()).name);
   console.log("Chain ID:", (await ethers.provider.getNetwork()).chainId);
 
-  if (balance < ethers.parseEther("0.01")) {
-    throw new Error("Insufficient balance. Need at least 0.01 ETH for deployment.");
+  if (balance < ethers.parseEther("0.0005")) {
+    throw new Error("Insufficient balance. Need at least 0.0005 ETH for deployment (actual cost ~0.0001 ETH on Base).");
   }
 
   console.log("\n📝 Step 1: Deploying SusuToken...");
   const SusuToken = await ethers.getContractFactory("SusuToken");
-  const susuToken = await SusuToken.deploy(deployerAddress);
+  const susuToken = await SusuToken.deploy(deployerAddress, { gasLimit: 3000000 });
   await susuToken.waitForDeployment();
   const susuTokenAddress = await susuToken.getAddress();
   console.log("✅ SusuToken deployed to:", susuTokenAddress);
 
   console.log("\n📝 Step 2: Deploying SusuFactory...");
   const SusuFactory = await ethers.getContractFactory("SusuFactory");
-  const susuFactory = await SusuFactory.deploy(deployerAddress);
+  const susuFactory = await SusuFactory.deploy(deployerAddress, { gasLimit: 6000000 });
   await susuFactory.waitForDeployment();
   const susuFactoryAddress = await susuFactory.getAddress();
   console.log("✅ SusuFactory deployed to:", susuFactoryAddress);
 
   console.log("\n📝 Step 3: Deploying SusuFactoryViews...");
   const SusuFactoryViews = await ethers.getContractFactory("SusuFactoryViews");
-  const susuFactoryViews = await SusuFactoryViews.deploy(susuFactoryAddress);
+  const susuFactoryViews = await SusuFactoryViews.deploy(susuFactoryAddress, { gasLimit: 6000000 });
   await susuFactoryViews.waitForDeployment();
   const susuFactoryViewsAddress = await susuFactoryViews.getAddress();
   console.log("✅ SusuFactoryViews deployed to:", susuFactoryViewsAddress);
@@ -78,6 +78,51 @@ async function main() {
   console.log("\n2. Test deployment with interaction scripts:");
   console.log("   npx hardhat run scripts/interact-create-group.ts --network base");
   console.log("\n3. Update frontend with new contract addresses");
+
+  // Auto-verify if on mainnet or testnet (not localhost)
+  const network = await ethers.provider.getNetwork();
+  if (network.chainId === 8453n || network.chainId === 84532n) {
+    console.log("\n🔍 Starting automatic verification...");
+    console.log("⏳ This may take 1-2 minutes. Please wait...\n");
+
+    try {
+      // Wait a bit for Etherscan to index the contracts
+      console.log("⏳ Waiting 30 seconds for BaseScan to index contracts...");
+      await new Promise(resolve => setTimeout(resolve, 30000));
+
+      console.log("📝 Verifying SusuToken...");
+      await verifyContract(susuTokenAddress, [deployerAddress]);
+
+      console.log("📝 Verifying SusuFactory...");
+      await verifyContract(susuFactoryAddress, [deployerAddress]);
+
+      console.log("📝 Verifying SusuFactoryViews...");
+      await verifyContract(susuFactoryViewsAddress, [susuFactoryAddress]);
+
+      console.log("\n✅ All contracts verified on BaseScan!");
+    } catch (error: any) {
+      console.log("\n⚠️  Automatic verification failed:", error.message);
+      console.log("📌 Please verify manually using the commands above");
+    }
+  }
+}
+
+async function verifyContract(address: string, constructorArguments: any[]) {
+  const hre = require("hardhat");
+
+  try {
+    await hre.run("verify:verify", {
+      address: address,
+      constructorArguments: constructorArguments,
+    });
+    console.log(`   ✅ ${address} verified`);
+  } catch (error: any) {
+    if (error.message.includes("Already Verified")) {
+      console.log(`   ℹ️  ${address} already verified`);
+    } else {
+      throw error;
+    }
+  }
 }
 
 main()
