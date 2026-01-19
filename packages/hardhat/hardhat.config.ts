@@ -114,9 +114,9 @@ const config: HardhatUserConfig = {
       accounts: [deployerPrivateKey],
     },
     base: {
-      url: "https://mainnet.base.org",
+      url: process.env.BASE_RPC_URL || "https://base.llamarpc.com",
       accounts: [deployerPrivateKey],
-      timeout: 60000,
+      timeout: 120000,
       gasPrice: "auto",
     },
     baseSepolia: {
