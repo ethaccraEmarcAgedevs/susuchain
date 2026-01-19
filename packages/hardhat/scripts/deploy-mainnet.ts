@@ -25,21 +25,21 @@ async function main() {
 
   console.log("\n📝 Step 1: Deploying SusuToken...");
   const SusuToken = await ethers.getContractFactory("SusuToken");
-  const susuToken = await SusuToken.deploy(deployerAddress);
+  const susuToken = await SusuToken.deploy(deployerAddress, { gasLimit: 3000000 });
   await susuToken.waitForDeployment();
   const susuTokenAddress = await susuToken.getAddress();
   console.log("✅ SusuToken deployed to:", susuTokenAddress);
 
   console.log("\n📝 Step 2: Deploying SusuFactory...");
   const SusuFactory = await ethers.getContractFactory("SusuFactory");
-  const susuFactory = await SusuFactory.deploy(deployerAddress);
+  const susuFactory = await SusuFactory.deploy(deployerAddress, { gasLimit: 6000000 });
   await susuFactory.waitForDeployment();
   const susuFactoryAddress = await susuFactory.getAddress();
   console.log("✅ SusuFactory deployed to:", susuFactoryAddress);
 
   console.log("\n📝 Step 3: Deploying SusuFactoryViews...");
   const SusuFactoryViews = await ethers.getContractFactory("SusuFactoryViews");
-  const susuFactoryViews = await SusuFactoryViews.deploy(susuFactoryAddress);
+  const susuFactoryViews = await SusuFactoryViews.deploy(susuFactoryAddress, { gasLimit: 6000000 });
   await susuFactoryViews.waitForDeployment();
   const susuFactoryViewsAddress = await susuFactoryViews.getAddress();
   console.log("✅ SusuFactoryViews deployed to:", susuFactoryViewsAddress);
