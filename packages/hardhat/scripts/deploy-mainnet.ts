@@ -78,6 +78,51 @@ async function main() {
   console.log("\n2. Test deployment with interaction scripts:");
   console.log("   npx hardhat run scripts/interact-create-group.ts --network base");
   console.log("\n3. Update frontend with new contract addresses");
+
+  // Auto-verify if on mainnet or testnet (not localhost)
+  const network = await ethers.provider.getNetwork();
+  if (network.chainId === 8453n || network.chainId === 84532n) {
+    console.log("\n🔍 Starting automatic verification...");
+    console.log("⏳ This may take 1-2 minutes. Please wait...\n");
+
+    try {
+      // Wait a bit for Etherscan to index the contracts
+      console.log("⏳ Waiting 30 seconds for BaseScan to index contracts...");
+      await new Promise(resolve => setTimeout(resolve, 30000));
+
+      console.log("📝 Verifying SusuToken...");
+      await verifyContract(susuTokenAddress, [deployerAddress]);
+
+      console.log("📝 Verifying SusuFactory...");
+      await verifyContract(susuFactoryAddress, [deployerAddress]);
+
+      console.log("📝 Verifying SusuFactoryViews...");
+      await verifyContract(susuFactoryViewsAddress, [susuFactoryAddress]);
+
+      console.log("\n✅ All contracts verified on BaseScan!");
+    } catch (error: any) {
+      console.log("\n⚠️  Automatic verification failed:", error.message);
+      console.log("📌 Please verify manually using the commands above");
+    }
+  }
+}
+
+async function verifyContract(address: string, constructorArguments: any[]) {
+  const hre = require("hardhat");
+
+  try {
+    await hre.run("verify:verify", {
+      address: address,
+      constructorArguments: constructorArguments,
+    });
+    console.log(`   ✅ ${address} verified`);
+  } catch (error: any) {
+    if (error.message.includes("Already Verified")) {
+      console.log(`   ℹ️  ${address} already verified`);
+    } else {
+      throw error;
+    }
+  }
 }
 
 main()
