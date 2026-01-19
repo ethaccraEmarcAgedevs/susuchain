@@ -116,6 +116,8 @@ const config: HardhatUserConfig = {
     base: {
       url: "https://mainnet.base.org",
       accounts: [deployerPrivateKey],
+      timeout: 60000,
+      gasPrice: "auto",
     },
     baseSepolia: {
       url: "https://sepolia.base.org",
