@@ -19,6 +19,8 @@ interface IEAS {
         uint256 value;
     }
 
+
+
     function attest(AttestationRequest calldata request) external payable returns (bytes32);
 }
 
@@ -31,6 +33,12 @@ contract AttestationHelper is Ownable {
     bytes32 public vouchSchema;
     bytes32 public groupCompletionSchema;
     bytes32 public reliabilitySchema;
+    bool public schemasLocked;
+
+    modifier schemasNotLocked() {
+    require(!schemasLocked, "Schemas are locked");
+    _;
+}
 
     // Mapping to track attestations
     mapping(address => bytes32[]) public userAttestations;
@@ -50,17 +58,29 @@ contract AttestationHelper is Ownable {
     /**
      * @notice Set schema UIDs (should be called after schemas are registered on EAS)
      */
-    function setSchemas(
-        bytes32 _contributionSchema,
-        bytes32 _vouchSchema,
-        bytes32 _groupCompletionSchema,
-        bytes32 _reliabilitySchema
-    ) external onlyOwner {
-        contributionSchema = _contributionSchema;
-        vouchSchema = _vouchSchema;
-        groupCompletionSchema = _groupCompletionSchema;
-        reliabilitySchema = _reliabilitySchema;
-    }
+function setSchemas(
+    bytes32 _contributionSchema,
+    bytes32 _vouchSchema,
+    bytes32 _groupCompletionSchema,
+    bytes32 _reliabilitySchema
+) external onlyOwner schemasNotLocked {
+    require(_contributionSchema != bytes32(0), "Invalid contribution schema");
+    require(_vouchSchema != bytes32(0), "Invalid vouch schema");
+    require(_groupCompletionSchema != bytes32(0), "Invalid group completion schema");
+    require(_reliabilitySchema != bytes32(0), "Invalid reliability schema");
+    
+    contributionSchema = _contributionSchema;
+    vouchSchema = _vouchSchema;
+    groupCompletionSchema = _groupCompletionSchema;
+    reliabilitySchema = _reliabilitySchema;
+    
+    emit SchemasSet(_contributionSchema, _vouchSchema, _groupCompletionSchema, _reliabilitySchema);
+}
+
+function lockSchemas() external onlyOwner {
+    schemasLocked = true;
+    emit SchemasLocked();
+}
 
     /**
      * @notice Attest a member's contribution to a round
